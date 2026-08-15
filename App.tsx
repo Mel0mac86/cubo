@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
 import Navigation from './src/ui/navigation';
+import ErrorBoundary from './src/ui/components/ErrorBoundary';
 import { StoreProvider, useStore } from './src/ui/state/store';
 import { SessionProvider } from './src/ui/state/cubeSession';
 import { colors, font } from './src/ui/theme';
@@ -17,15 +18,20 @@ import { colors, font } from './src/ui/theme';
  */
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <StoreProvider>
-        <SessionProvider>
-          <StatusBar style="light" />
-          <UsageTracker />
-          <Gate />
-        </SessionProvider>
-      </StoreProvider>
-    </SafeAreaProvider>
+    // La barriera sta PIU' IN ALTO di tutto il resto: se qualcosa si rompe,
+    // il bambino vede un messaggio e un pulsante, non lo schermo vuoto che
+    // React lascia quando smonta l'applicazione.
+    <ErrorBoundary nome="app">
+      <SafeAreaProvider>
+        <StoreProvider>
+          <SessionProvider>
+            <StatusBar style="light" />
+            <UsageTracker />
+            <Gate />
+          </SessionProvider>
+        </StoreProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

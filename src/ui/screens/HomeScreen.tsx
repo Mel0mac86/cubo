@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
-import Cube3D from '../components/Cube3D';
+import CubeView from '../components/CubeView';
 import Rubi from '../components/Rubi';
 import Screen from '../components/Screen';
 import { RootStackParamList } from '../navigation';
@@ -45,7 +45,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <Cube3D facelets={SHOWCASE} spin interactive={false} style={styles.cube} />
+      <CubeView facelets={SHOWCASE} spin interactive={false} style={styles.cube} />
 
       <Rubi says={greeting} onRepeat={() => repeat(GREETING)} />
 

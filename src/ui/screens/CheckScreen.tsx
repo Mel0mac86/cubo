@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
-import Cube3D from '../components/Cube3D';
+import CubeView from '../components/CubeView';
 import FaceGrid from '../components/FaceGrid';
 import Rubi, { RubiMood } from '../components/Rubi';
 import Screen, { Card } from '../components/Screen';
@@ -121,7 +121,7 @@ export default function CheckScreen({ navigation }: Props) {
   if (!report) {
     return (
       <Screen title="Controllo del cubo" emoji="🔍" scroll={false}>
-        <Cube3D
+        <CubeView
           facelets={session.colors}
           spin
           interactive={false}
@@ -150,7 +150,7 @@ export default function CheckScreen({ navigation }: Props) {
           />
         }
       >
-        <Cube3D facelets={session.colors} spin interactive style={{ maxHeight: 280 }} />
+        <CubeView facelets={session.colors} spin interactive style={{ maxHeight: 280 }} />
         <Rubi says={says} mood="festa" onRepeat={() => repeat(says)} />
 
         <Card>

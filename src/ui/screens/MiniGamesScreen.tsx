@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
-import Cube3D from '../components/Cube3D';
+import CubeView from '../components/CubeView';
 import Rubi, { RubiMood } from '../components/Rubi';
 import Screen, { Card } from '../components/Screen';
 import { RootStackParamList } from '../navigation';
@@ -135,7 +135,7 @@ function Play({ game, onExit }: { game: MiniGameId; onExit: () => void }) {
         }
       >
         <Text style={styles.score}>Punti: {score} ⭐</Text>
-        <Cube3D
+        <CubeView
           facelets={facesToClassicColors(question.facelets ?? [])}
           animate={showing && seq[demoStep] ? { move: seq[demoStep], id: animId, slow: true } : null}
           onAnimationEnd={() => setDemoStep((s) => Math.min(s + 1, seq.length))}
@@ -219,7 +219,7 @@ function Play({ game, onExit }: { game: MiniGameId; onExit: () => void }) {
       <Text style={styles.score}>Punti: {score} ⭐</Text>
 
       {question.facelets ? (
-        <Cube3D facelets={displayFacelets} interactive style={{ maxHeight: 240 }} />
+        <CubeView facelets={displayFacelets} interactive style={{ maxHeight: 240 }} />
       ) : null}
 
       <Card>

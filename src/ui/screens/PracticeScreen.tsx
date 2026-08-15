@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
-import Cube3D from '../components/Cube3D';
+import CubeView from '../components/CubeView';
 import Rubi, { RubiMood } from '../components/Rubi';
 import Screen, { Card } from '../components/Screen';
 import { RootStackParamList } from '../navigation';
@@ -167,7 +167,7 @@ export default function PracticeScreen({ navigation, route }: Props) {
     >
       <Text style={styles.goal}>🎯 {GOAL_LABEL[goal]}</Text>
 
-      <Cube3D
+      <CubeView
         facelets={facesToClassicColors(cubieToFacelet(cube))}
         animate={animating ? { move: animating, id: animId } : null}
         onAnimationEnd={() => setAnimating(null)}

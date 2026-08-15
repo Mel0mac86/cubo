@@ -29,6 +29,13 @@ export interface Cube3DProps {
   style?: object;
   /** Rotazione automatica lenta (schermata iniziale). */
   spin?: boolean;
+  /**
+   * Chiamata se la grafica 3D non parte o si interrompe.
+   * Gli errori dentro il contesto WebGL arrivano in modo asincrono, quindi non
+   * possono essere intercettati da una barriera React: vanno riportati a mano,
+   * altrimenti l'app resterebbe con un riquadro nero e nessuna spiegazione.
+   */
+  onGlError?: (motivo: string) => void;
 }
 
 /** Asse uscente da ciascuna faccia, come vettore di three.js. */
@@ -53,6 +60,7 @@ export default function Cube3D({
   interactive = true,
   style,
   spin,
+  onGlError,
 }: Cube3DProps) {
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cubeRef = useRef<THREE.Group | null>(null);
@@ -172,6 +180,21 @@ export default function Cube3D({
 
   const onContextCreate = useCallback(
     (gl: ExpoWebGLRenderingContext) => {
+      try {
+        avviaScena(gl);
+      } catch (e) {
+        // Niente WebGL (telefono vecchio, browser che lo blocca, memoria
+        // grafica esaurita): lo diciamo a chi ci ha montato, che passera' al
+        // cubo disegnato in piano.
+        onGlError?.(e instanceof Error ? e.message : 'grafica 3D non disponibile');
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [paint, onAnimationEnd, onGlError],
+  );
+
+  const avviaScena = useCallback(
+    (gl: ExpoWebGLRenderingContext) => {
       const renderer = new Renderer({ gl, alpha: true });
       renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
       renderer.setClearColor(0x000000, 0);
@@ -221,7 +244,19 @@ export default function Cube3D({
 
       let last = Date.now();
       const loop = () => {
+        try {
+          disegna();
+        } catch (e) {
+          // Un errore a ogni fotogramma diventerebbe un fiume di eccezioni:
+          // fermiamo il ciclo e passiamo al cubo in piano.
+          cancelAnimationFrame(frame);
+          onGlError?.(e instanceof Error ? e.message : 'errore durante il disegno');
+          return;
+        }
         frame = requestAnimationFrame(loop);
+      };
+
+      const disegna = () => {
         const now = Date.now();
         const dt = Math.min(0.05, (now - last) / 1000);
         last = now;
@@ -273,7 +308,7 @@ export default function Cube3D({
       let frame = requestAnimationFrame(loop);
       stopLoop.current = () => cancelAnimationFrame(frame);
     },
-    [paint, onAnimationEnd],
+    [paint, onAnimationEnd, onGlError],
   );
 
   // Quando il componente sparisce, fermiamo il ciclo: senza questo, uscendo

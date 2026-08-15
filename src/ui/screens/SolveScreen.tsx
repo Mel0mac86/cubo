@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
-import Cube3D from '../components/Cube3D';
+import CubeView from '../components/CubeView';
 import Rubi, { RubiMood } from '../components/Rubi';
 import Screen, { Card } from '../components/Screen';
 import { RootStackParamList } from '../navigation';
@@ -217,7 +217,7 @@ export default function SolveScreen({ navigation }: Props) {
         </Text>
       ) : null}
 
-      <Cube3D
+      <CubeView
         facelets={faceletColors}
         highlight={instruction?.face ?? null}
         arrow={instruction?.arrow ?? null}
