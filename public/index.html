@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+
+    <!--
+      viewport-fit=cover: sull'iPhone la pagina arriva fin sotto il "notch",
+      poi le zone sicure le gestiamo con env(safe-area-inset-*).
+      user-scalable=no: senza, un doppio tocco durante il gioco zooma e il
+      bambino si ritrova il cubo storto senza capire perche'.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+
+    <title>Rubik Hero</title>
+    <meta
+      name="description"
+      content="Impara a risolvere il Cubo di Rubik passo dopo passo, dai 9 anni in su."
+    />
+
+    <!-- Colori della barra di sistema -->
+    <meta name="theme-color" content="#2E1065" />
+    <meta name="color-scheme" content="dark" />
+
+    <!--
+      Queste quattro righe sono quelle che contano per iPhone: senza
+      apple-mobile-web-app-capable, l'icona salvata sulla Home riaprirebbe
+      Safari con la barra degli indirizzi, invece dell'app a schermo intero.
+    -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Rubik Hero" />
+
+    <!-- L'icona che finisce sulla schermata Home dell'iPhone -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background-color: #2e1065;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Aspetto "app": niente selezione del testo, niente menu al tocco lungo. */
+      body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      /* I campi di testo restano selezionabili (soprannome, area genitore). */
+      input,
+      textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1 1 auto;
+        flex-direction: column;
+      }
+
+      /* Schermata di attesa mentre arriva il codice dell'app.
+         Viene sostituita da React appena e' pronto. */
+      #avvio {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #2e1065;
+        color: #f5f3ff;
+        text-align: center;
+        padding: 24px;
+      }
+
+      #avvio .cubo {
+        font-size: 84px;
+        animation: dondola 1.6s ease-in-out infinite;
+      }
+
+      #avvio h1 {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      #avvio p {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #a5b4fc;
+      }
+
+      @keyframes dondola {
+        0%,
+        100% {
+          transform: translateY(0) rotate(-6deg);
+        }
+        50% {
+          transform: translateY(-14px) rotate(6deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #avvio .cubo {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root">
+      <div id="avvio">
+        <div class="cubo">🧩</div>
+        <h1>Rubik Hero</h1>
+        <p>Sto preparando tutto...</p>
+      </div>
+    </div>
+
+    <script>
+      // Il service worker fa funzionare l'app anche senza rete: una volta
+      // aperta la prima volta, il cubo si puo' risolvere in macchina, in
+      // aereo o dove il telefono non prende.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {
+            // Niente service worker (per esempio se il sito non e' in HTTPS):
+            // l'app funziona lo stesso, semplicemente senza modalita' offline.
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

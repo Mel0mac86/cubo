@@ -21,20 +21,35 @@ export function makeRng(seed: number): Rng {
 /**
  * Sequenza casuale di `length` mosse, senza due mosse consecutive sulla stessa
  * faccia e senza tre mosse consecutive sullo stesso asse.
+ *
+ * Le mosse vietate vengono ESCLUSE PRIMA di sorteggiare, non scartate dopo.
+ * La differenza sembra da poco ma non lo e': scartando dopo, un generatore
+ * degenere (per esempio uno che restituisce sempre lo stesso valore, come
+ * capita quando si vuole un mescolamento fisso per una vetrina) farebbe
+ * ciclare la funzione all'infinito e bloccherebbe l'intera app. Cosi invece
+ * ogni sorteggio produce sempre una mossa valida e il ciclo finisce sempre.
  */
 export function randomMoveSequence(length: number, rng: Rng = Math.random): Move[] {
   const moves: Move[] = [];
   let lastFace = -1;
   let prevFace = -1;
-  while (moves.length < length) {
-    const idx = Math.floor(rng() * 18);
-    const m = moveFromIndex(idx);
-    if (m.face === lastFace) continue;
-    // evita F B F (stesso asse tre volte): assi = face % 3
-    if (m.face % 3 === lastFace % 3 && lastFace % 3 === prevFace % 3) continue;
+
+  for (let n = 0; n < length; n++) {
+    // Facce ammesse: diversa dall'ultima, e non un terzo giro di fila
+    // sullo stesso asse (assi = faccia % 3).
+    const faces: number[] = [];
+    for (let f = 0; f < 6; f++) {
+      if (f === lastFace) continue;
+      if (f % 3 === lastFace % 3 && lastFace % 3 === prevFace % 3) continue;
+      faces.push(f);
+    }
+
+    const face = faces[Math.min(faces.length - 1, Math.floor(rng() * faces.length))];
+    const power = Math.min(2, Math.floor(rng() * 3));
+    moves.push(moveFromIndex(face * 3 + power));
+
     prevFace = lastFace;
-    lastFace = m.face;
-    moves.push(m);
+    lastFace = face;
   }
   return moves;
 }

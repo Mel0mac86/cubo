@@ -20,6 +20,7 @@ completo dello stato e riconoscimento dei colori con visione artificiale.
 - [Il linguaggio per bambini](#il-linguaggio-per-bambini)
 - [Privacy e sicurezza](#privacy-e-sicurezza)
 - [Gemini](#gemini)
+- [Installarla su iPhone (PWA)](#installarla-su-iphone-pwa)
 - [Come si avvia](#come-si-avvia)
 - [Test](#test)
 - [Cosa è stato verificato e cosa no](#cosa-è-stato-verificato-e-cosa-no)
@@ -311,6 +312,77 @@ immagini della fotocamera.
 contengono la notazione del cubo, risposte con parole tecniche («algoritmo»,
 «senso orario»…), risposte vuote, e taglio a 220 caratteri.
 
+
+---
+
+## Installarla su iPhone (PWA)
+
+Oltre alle build native, Rubik Hero si pubblica come sito installabile: si apre
+in Safari, si aggiunge alla schermata Home e da quel momento si comporta come
+un'app — icona propria, schermo intero senza barra degli indirizzi, e funziona
+anche senza rete.
+
+### Costruire il sito
+
+```bash
+npm run icons        # rigenera le icone (serve solo se le cambi)
+npm run build:web    # crea la cartella dist/
+```
+
+In `dist/` finisce un sito statico: si pubblica ovunque (Netlify, Vercel, GitHub
+Pages, un qualunque hosting). **Deve stare in HTTPS**, altrimenti iOS non
+installa l'app e la fotocamera non parte.
+
+Per provarlo in locale:
+
+```bash
+npx expo start --web
+```
+
+### Metterla sulla schermata Home dell'iPhone
+
+1. Apri il sito **con Safari** (non Chrome: su iPhone solo Safari sa installare).
+2. Tocca il pulsante Condividi (il quadrato con la freccia in su).
+3. Scorri e tocca **«Aggiungi a Home»**.
+4. Comparirà l'icona del cubo con scritto **Rubik Hero**: toccala e l'app si apre
+   a schermo intero.
+
+La prima apertura scarica l'app (circa 1,7 MB); da lì in poi parte anche in
+modalità aereo.
+
+### Cosa c'è dietro
+
+| File | A cosa serve |
+|------|--------------|
+| `public/index.html` | I meta tag iOS. Senza `apple-mobile-web-app-capable` l'icona salvata riaprirebbe Safari con la barra degli indirizzi invece dell'app a schermo intero |
+| `public/manifest.webmanifest` | Nome, icone, colori, `display: standalone`, verticale |
+| `public/sw.js` | Il service worker che fa funzionare tutto senza rete |
+| `scripts/make-icons.mjs` | Disegna le icone (192, 512, maskable, apple-touch 180, favicon) invece di tenere PNG binari nel repository |
+
+Il service worker usa due strategie diverse per due problemi diversi: i file col
+nome che contiene l'impronta (`index-<hash>.js`) vengono dalla cache senza
+nemmeno chiedere alla rete — è quello che rende l'avvio istantaneo — mentre
+`index.html` prova prima la rete, così dopo una nuova pubblicazione il telefono
+non resta con la versione vecchia.
+
+Ci sono 19 test (`tests/pwa.test.ts`) che controllano questi file: sono verifiche
+noiose ma preziose, perché una riga tolta per sbaglio da `index.html` non si nota
+provando l'app nel browser — si scopre solo dopo averla installata.
+
+### Differenze rispetto alle build native
+
+| | Nativa (App Store / TestFlight) | PWA su iPhone |
+|---|---|---|
+| Cubo 3D, solver, livelli, minigiochi | ✅ | ✅ |
+| Funziona offline | ✅ | ✅ (dopo la prima apertura) |
+| Voce di Rubi | ✅ | ✅ (voci italiane di sistema) |
+| Fotocamera | ✅ | ⚠️ richiede HTTPS; da iOS 16.4 funziona anche in modalità Home |
+| Progressi salvati | ✅ | ⚠️ nell'archivio del browser: iOS può cancellarlo se l'app resta inutilizzata a lungo |
+| Aggiornamenti | passano dallo store | bastano un nuovo `build:web` e una ricarica |
+
+L'inserimento manuale dei colori resta comunque disponibile ovunque, quindi anche
+se la fotocamera non parte l'app è pienamente utilizzabile.
+
 ---
 
 ## Come si avvia
@@ -318,7 +390,7 @@ contengono la notazione del cubo, risposte con parole tecniche («algoritmo»,
 ```bash
 npm install
 cp .env.example .env      # facoltativo: metti la chiave Gemini se la vuoi
-npx expo start            # poi apri con Expo Go, oppure premi a / i
+npx expo start            # poi apri con Expo Go, oppure premi a / i / w
 ```
 
 Per una build nativa (serve per la fotocamera su iOS):

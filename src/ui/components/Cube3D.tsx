@@ -58,6 +58,7 @@ export default function Cube3D({
   const cubeRef = useRef<THREE.Group | null>(null);
   const cubiesRef = useRef<{ mesh: THREE.Mesh; pos: THREE.Vector3 }[]>([]);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const stopLoop = useRef<(() => void) | null>(null);
 
   // Rotazione controllata dal dito.
   const orientation = useRef({ x: -0.45, y: 0.6 });
@@ -73,6 +74,19 @@ export default function Cube3D({
     members: THREE.Mesh[];
   } | null>(null);
   const lastAnimId = useRef<number>(-1);
+  /**
+   * Ridisegniamo solo quando c'e' qualcosa di nuovo da mostrare.
+   *
+   * Un ciclo che ridisegna 60 volte al secondo anche a cubo fermo tiene la GPU
+   * sempre accesa: su un telefono in mano a un bambino vuol dire batteria che
+   * cala e telefono che scalda, per niente. Qui il disegno avviene quando c'e'
+   * un'animazione, quando il dito sta girando il cubo, quando cambiano i colori
+   * o quando il cubo gira da solo nella schermata iniziale.
+   */
+  const needsRender = useRef(true);
+  const invalidate = useCallback(() => {
+    needsRender.current = true;
+  }, []);
   const faceletsRef = useRef(facelets);
   const highlightRef = useRef(highlight);
   const spinRef = useRef(spin);
@@ -93,6 +107,7 @@ export default function Cube3D({
           y: dragStart.current.y + g.dx * 0.012,
           x: Math.max(-1.3, Math.min(1.3, dragStart.current.x + g.dy * 0.012)),
         };
+        needsRender.current = true;
       },
     }),
   ).current;
@@ -121,7 +136,8 @@ export default function Cube3D({
 
   useEffect(() => {
     paint();
-  }, [facelets, highlight, paint]);
+    invalidate();
+  }, [facelets, highlight, paint, invalidate]);
 
   /** Avvia l'animazione di una mossa. */
   useEffect(() => {
@@ -151,7 +167,8 @@ export default function Cube3D({
       speed: (slow ? 1.1 : 2.6) * Math.sign(target),
       members,
     };
-  }, [animate]);
+    invalidate();
+  }, [animate, invalidate]);
 
   const onContextCreate = useCallback(
     (gl: ExpoWebGLRenderingContext) => {
@@ -204,12 +221,20 @@ export default function Cube3D({
 
       let last = Date.now();
       const loop = () => {
-        requestAnimationFrame(loop);
+        frame = requestAnimationFrame(loop);
         const now = Date.now();
         const dt = Math.min(0.05, (now - last) / 1000);
         last = now;
 
-        if (spinRef.current) orientation.current.y += dt * 0.35;
+        if (spinRef.current) {
+          orientation.current.y += dt * 0.35;
+          needsRender.current = true;
+        }
+
+        // Niente da mostrare di nuovo: saltiamo il disegno e lasciamo
+        // respirare processore e batteria.
+        if (!needsRender.current && !anim.current) return;
+
         group.rotation.x = orientation.current.x;
         group.rotation.y = orientation.current.y;
 
@@ -240,13 +265,20 @@ export default function Cube3D({
           }
         }
 
+        needsRender.current = false;
         renderer.render(scene, camera);
         gl.endFrameEXP();
       };
-      loop();
+
+      let frame = requestAnimationFrame(loop);
+      stopLoop.current = () => cancelAnimationFrame(frame);
     },
     [paint, onAnimationEnd],
   );
+
+  // Quando il componente sparisce, fermiamo il ciclo: senza questo, uscendo
+  // da una schermata il disegno continuerebbe a girare a vuoto.
+  useEffect(() => () => stopLoop.current?.(), []);
 
   return (
     <View style={[styles.wrap, style]} {...(interactive ? panResponder.panHandlers : {})}>

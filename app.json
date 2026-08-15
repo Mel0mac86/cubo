@@ -6,10 +6,13 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "rubikhero",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#4C1D95"
+      "backgroundColor": "#4C1D95",
+      "image": "./assets/icon-512.png"
     },
     "ios": {
       "supportsTablet": true,
@@ -22,9 +25,12 @@
     "android": {
       "package": "com.rubikhero.app",
       "adaptiveIcon": {
-        "backgroundColor": "#4C1D95"
+        "backgroundColor": "#4C1D95",
+        "foregroundImage": "./assets/icon-maskable-512.png"
       },
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_FINE_LOCATION",
@@ -48,6 +54,20 @@
         "hasThirdPartyAnalytics": false,
         "childDirected": true
       }
-    }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "Rubik Hero",
+      "shortName": "Rubik Hero",
+      "lang": "it",
+      "themeColor": "#4C1D95",
+      "backgroundColor": "#2E1065",
+      "display": "standalone",
+      "orientation": "portrait",
+      "description": "Impara a risolvere il Cubo di Rubik, passo dopo passo, dai 9 anni in su."
+    },
+    "icon": "./assets/icon-512.png"
   }
 }

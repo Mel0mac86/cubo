@@ -13,7 +13,7 @@ import { useSession } from '../state/cubeSession';
 import { cubieToFacelet, identityCube } from '../../core/cube/cubie';
 import { CLASSIC_COLORS } from '../../core/cube/scheme';
 import { applyMoves } from '../../core/cube/moves';
-import { randomMoveSequence } from '../../core/cube/scramble';
+import { makeRng, randomMoveSequence } from '../../core/cube/scramble';
 import { colors, font, space } from '../theme';
 import { heroTitle } from '../../core/kids/achievements';
 
@@ -27,7 +27,7 @@ const GREETING = 'Ciao! Sono Rubi! Ti aiutero a risolvere il tuo cubo!';
  * davanti verde, e cosi via): serve solo per la vetrina.
  */
 const SHOWCASE = cubieToFacelet(
-  applyMoves(identityCube(), randomMoveSequence(8, () => 0.42)),
+  applyMoves(identityCube(), randomMoveSequence(8, makeRng(20250815))),
 ).map((f) => CLASSIC_COLORS[f]);
 
 export default function HomeScreen({ navigation }: Props) {

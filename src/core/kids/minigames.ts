@@ -74,7 +74,25 @@ export interface Question {
 }
 
 function pick<T>(arr: T[], rng: Rng): T {
-  return arr[Math.floor(rng() * arr.length) % arr.length];
+  return arr[Math.min(arr.length - 1, Math.floor(rng() * arr.length))];
+}
+
+/**
+ * Sceglie `n` elementi diversi da `pool`.
+ *
+ * Scorriamo la lista invece di sorteggiare finche' non escono valori nuovi:
+ * cosi la funzione finisce sempre, anche con un generatore che restituisce
+ * sempre lo stesso numero. Un ciclo infinito qui bloccherebbe tutta l'app.
+ */
+function pickDistinct<T>(pool: T[], n: number, rng: Rng, exclude: T[] = []): T[] {
+  const candidati = pool.filter((c) => !exclude.includes(c));
+  const out: T[] = [];
+  const start = Math.min(candidati.length - 1, Math.floor(rng() * candidati.length));
+  for (let i = 0; i < candidati.length && out.length < n; i++) {
+    const c = candidati[(start + i) % candidati.length];
+    if (!out.includes(c)) out.push(c);
+  }
+  return out;
 }
 
 function shuffleWithAnswer(correct: string, others: string[], rng: Rng): { options: string[]; answer: number } {
@@ -91,19 +109,15 @@ export function makeColorQuestion(rng: Rng): Question {
   const cube = scrambledCube(12, rng);
   const facelets = cubieToFacelet(cube);
   // Evitiamo i centri: sarebbe troppo facile (basta guardare la faccia).
-  let idx = Math.floor(rng() * 54);
-  while (idx % 9 === 4) idx = Math.floor(rng() * 54);
+  // Sorteggiamo fra i 48 quadratini NON centrali, invece di risorteggiare
+  // finche' non ne esce uno buono: cosi non c'e' modo di restare in ciclo.
+  const nonCentrali: number[] = [];
+  for (let i = 0; i < 54; i++) if (i % 9 !== 4) nonCentrali.push(i);
+  const idx = nonCentrali[Math.min(nonCentrali.length - 1, Math.floor(rng() * nonCentrali.length))];
 
   const correct = COLOR_LABEL_IT[facelets[idx] as unknown as keyof typeof COLOR_LABEL_IT];
-  const wrong = Object.values(COLOR_LABEL_IT)
-    .filter((c) => c !== correct)
-    .slice(0, 5);
-  // tre alternative sbagliate scelte a caso
-  const picks: string[] = [];
-  while (picks.length < 3) {
-    const w = pick(wrong, rng);
-    if (!picks.includes(w)) picks.push(w);
-  }
+  const wrong = Object.values(COLOR_LABEL_IT).filter((c) => c !== correct);
+  const picks = pickDistinct(wrong, 3, rng);
   const { options, answer } = shuffleWithAnswer(correct, picks, rng);
 
   return {
@@ -126,11 +140,7 @@ export function makeMoveQuestion(rng: Rng): Question {
   const solution = invertMoves(seq)[0];
   const correct = SIDE_NAME_IT[solution.face];
   const others = Object.values(SIDE_NAME_IT).filter((s) => s !== correct);
-  const picks: string[] = [];
-  while (picks.length < 3) {
-    const w = pick(others, rng);
-    if (!picks.includes(w)) picks.push(w);
-  }
+  const picks = pickDistinct(others, 3, rng);
   const { options, answer } = shuffleWithAnswer(correct, picks, rng);
   const desc = describeMove(solution, 'facile');
 
@@ -164,12 +174,8 @@ export function makePieceQuestion(rng: Rng): Question {
   };
 
   const correct = slotName(slot);
-  const picks: string[] = [];
-  while (picks.length < 3) {
-    const j = Math.floor(rng() * 12);
-    const cand = slotName(j);
-    if (cand !== correct && !picks.includes(cand)) picks.push(cand);
-  }
+  const tutti = Array.from({ length: 12 }, (_, i) => slotName(i));
+  const picks = pickDistinct(tutti, 3, rng, [correct]);
   const { options, answer } = shuffleWithAnswer(correct, picks, rng);
 
   return {

@@ -24,7 +24,7 @@ import {
   MINI_GAMES,
   checkMemoryAnswer,
 } from '../src/core/kids/minigames';
-import { makeRng } from '../src/core/cube/scramble';
+import { makeRng, randomMoveSequence, scrambledCube } from '../src/core/cube/scramble';
 
 describe('linguaggio per bambini', () => {
   it('non usa mai la notazione tecnica nel testo principale in modalita facile', () => {
@@ -233,5 +233,50 @@ describe('mini giochi', () => {
     expect(checkMemoryAnswer(seq, parseMoves("R U F'"))).toBe(true);
     expect(checkMemoryAnswer(seq, parseMoves('R U F'))).toBe(false);
     expect(checkMemoryAnswer(seq, parseMoves('R U'))).toBe(false);
+  });
+});
+
+describe('robustezza: niente cicli infiniti', () => {
+  /**
+   * Questi test nascono da un difetto vero: la schermata iniziale chiedeva un
+   * mescolamento fisso passando un generatore che restituiva sempre lo stesso
+   * numero. La vecchia versione di randomMoveSequence scartava le mosse
+   * ripetute e riprovava, quindi con quel generatore non usciva mai una mossa
+   * accettabile: ciclo infinito, e l'app si bloccava all'avvio senza nemmeno
+   * mostrare la schermata. Non lo vedeva nessun test perche' nessun test
+   * eseguiva davvero il componente.
+   *
+   * Da qui in poi le funzioni che sorteggiano devono finire SEMPRE, qualunque
+   * generatore ricevano.
+   */
+  const degeneri: [string, () => number][] = [
+    ['sempre 0.42', () => 0.42],
+    ['sempre 0', () => 0],
+    ['sempre quasi 1', () => 0.999999],
+  ];
+
+  it.each(degeneri)('randomMoveSequence finisce con un generatore che dà %s', (_nome, rng) => {
+    const moves = randomMoveSequence(20, rng);
+    expect(moves).toHaveLength(20);
+    // La regola resta rispettata: mai due mosse di fila sulla stessa faccia.
+    for (let i = 1; i < moves.length; i++) {
+      expect(moves[i].face).not.toBe(moves[i - 1].face);
+    }
+  });
+
+  it.each(degeneri)('i minigiochi si generano con un generatore che dà %s', (_nome, rng) => {
+    for (const g of MINI_GAMES) {
+      const q = makeQuestion(g.id, rng);
+      expect(q.prompt.length).toBeGreaterThan(0);
+      if (g.id !== 'memory') {
+        expect(q.options).toHaveLength(4);
+        expect(new Set(q.options).size).toBe(4);
+      }
+    }
+  });
+
+  it('scrambledCube funziona anche con un generatore costante', () => {
+    const cube = scrambledCube(25, () => 0.42);
+    expect(Array.from(cube.cp).sort()).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
   });
 });
