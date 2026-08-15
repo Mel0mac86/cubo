@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   Rgb,
   assignAllStickers,
+  classificaFaccia,
   classifySticker,
   defaultCalibration,
   hungarian,
@@ -28,6 +29,7 @@ import {
   pushFrame,
   readyForNextFace,
 } from '../src/core/vision/scanner';
+import { centroQuad, latoMedio } from '../src/core/vision/homography';
 import { CubeColor, Face } from '../src/core/cube/defs';
 import { cubieToFacelet, identityCube } from '../src/core/cube/cubie';
 import { makeRng, scrambledCube } from '../src/core/cube/scramble';
@@ -190,11 +192,12 @@ describe('riconoscimento della griglia', () => {
     const colors = [0, 1, 2, 3, 4, 5, 0, 1, 2] as CubeColor[];
     const grid = detectGrid(renderFace(colors), FULL.region);
     expect(grid.found).toBe(true);
-    // le due linee interne devono cadere vicino a un terzo e due terzi
-    expect(grid.xs[1]).toBeGreaterThan(160 / 3 - 12);
-    expect(grid.xs[1]).toBeLessThan(160 / 3 + 12);
-    expect(grid.ys[2]).toBeGreaterThan((160 * 2) / 3 - 12);
-    expect(grid.ys[2]).toBeLessThan((160 * 2) / 3 + 12);
+    // Il cubo riempie il fotogramma: i quattro angoli devono stare vicino a
+    // quelli dell'immagine, e il lato deve essere quasi tutto il fotogramma.
+    const [cx, cy] = centroQuad(grid.quad);
+    expect(Math.abs(cx - 80)).toBeLessThan(10);
+    expect(Math.abs(cy - 80)).toBeLessThan(10);
+    expect(latoMedio(grid.quad)).toBeGreaterThan(130);
   });
 
   it('non trova nessuna griglia su un muro vuoto', () => {
@@ -257,11 +260,48 @@ describe('controlli di qualita', () => {
     );
   });
 
-  it('un riflesso che copre una cella viene segnalato', () => {
-    const a = analyzeFrame(renderFace(colors, { glareCell: 4, glareRadius: 0.8 }), FULL);
-    expect(a.quality.ok).toBe(false);
-    expect(a.quality.issues.some((i) => i === 'riflesso' || i === 'coperto')).toBe(true);
-    expect(a.quality.advice).toMatch(/riflesso|mano/i);
+  /**
+   * Sui riflessi la difesa NON e' il singolo fotogramma.
+   *
+   * Da un'immagine piccola non si distingue un adesivo bianco ben illuminato
+   * (satura, ed e' giusto) da un riflesso su un adesivo colorato: misurato,
+   * danno la stessa saturazione, la stessa dispersione e la stessa sicurezza di
+   * classificazione. Bloccare su quel segnale significava rifiutare all'infinito
+   * facce perfettamente leggibili.
+   *
+   * La difesa vera e' che il riflesso SI SPOSTA quando il bambino muove il
+   * cubo, mentre il colore dell'adesivo resta: fondendo piu' fotogrammi con la
+   * mediana, il riflesso sparisce da solo. E' quello che verifichiamo qui.
+   */
+  it('un riflesso che si sposta viene cancellato dalla fusione dei fotogrammi', () => {
+    const veri = colors;
+    // Cinque fotogrammi, con il riflesso che ogni volta cade su una cella diversa.
+    const perCella: { r: number; g: number; b: number }[][] = Array.from({ length: 9 }, () => []);
+    for (const cella of [0, 2, 4, 6, 8]) {
+      const f = renderFace(veri, { glareCell: cella, glareRadius: 0.8, noise: 8, rng: makeRng(cella + 1) });
+      const a = analyzeFrame(f, FULL);
+      expect(a.cells).not.toBeNull();
+      a.cells!.forEach((c, i) => perCella[i].push(c.color));
+    }
+
+    const mediana = (v: number[]) => v.slice().sort((x, y) => x - y)[Math.floor(v.length / 2)];
+    const fusi = perCella.map((campioni) => ({
+      r: mediana(campioni.map((c) => c.r)),
+      g: mediana(campioni.map((c) => c.g)),
+      b: mediana(campioni.map((c) => c.b)),
+    }));
+
+    const letti = classificaFaccia(fusi, defaultCalibration()).map((g) => g.color);
+    expect(letti).toEqual(veri);
+  });
+
+  it('un solo fotogramma con riflesso puo sbagliare: per questo se ne usano tanti', () => {
+    // Documenta il limite, cosi resta chiaro perche' la fusione e' necessaria.
+    const f = renderFace(colors, { glareCell: 4, glareRadius: 0.9 });
+    const a = analyzeFrame(f, FULL);
+    const letto = classificaFaccia(a.cells!.map((c) => c.color), defaultCalibration())[4].color;
+    // Il quadratino centrale, sommerso dal riflesso, non e' piu' quello vero.
+    expect(letto).not.toBe(colors[4]);
   });
 
   it('un riflessino piccolo non rovina la lettura (merito della mediana)', () => {

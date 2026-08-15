@@ -16,7 +16,7 @@ import {
   Rgb,
   StickerAssignment,
   assignAllStickers,
-  classifySticker,
+  classificaFaccia,
   defaultCalibration,
   learnReference,
 } from './color';
@@ -89,6 +89,8 @@ export interface CapturedFace {
   confidences: number[];
   /** Quanti fotogrammi hanno contribuito. */
   frames: number;
+  /** Vero se l'abbiamo presa pur non essendo del tutto sicuri: da far controllare. */
+  incerta?: boolean;
 }
 
 export type ScannerPhase =
@@ -102,6 +104,8 @@ export type ScannerPhase =
 
 export interface ScannerState {
   phase: ScannerPhase;
+  /** Fotogrammi buoni spesi sulla faccia in corso (per non insistere all'infinito). */
+  attempts: number;
   /** Indice nella SCAN_ORDER: 0..5 */
   stepIndex: number;
   captured: CapturedFace[];
@@ -116,8 +120,21 @@ export interface ScannerState {
 
 /** Quanti fotogrammi buoni servono prima di scattare da soli. */
 export const FRAMES_TO_CAPTURE = 5;
-/** Sotto questa sicurezza non accettiamo la faccia in automatico. */
+/** Sotto questa sicurezza preferiamo insistere ancora un po'. */
 export const MIN_CONFIDENCE = 0.55;
+/**
+ * Dopo quanti fotogrammi buoni ci arrendiamo e acquisiamo lo stesso.
+ *
+ * Senza questo limite un solo quadratino ambiguo bloccava tutto: lo scanner
+ * continuava a ripetere "avvicina il cubo" all'infinito e la faccia non veniva
+ * mai presa. Misurato sul banco di prova: 7 scansioni su 12 non arrivavano in
+ * fondo, pur leggendo il 100% dei colori correttamente quando ci arrivavano.
+ *
+ * Meglio acquisire e far controllare: l'anteprima segna i quadratini incerti
+ * con un avviso e bastano due tocchi per correggerli. Un bambino che gira il
+ * cubo per un minuto senza che succeda niente, invece, molla.
+ */
+export const FRAMES_BEFORE_GIVING_UP = 14;
 
 export function newScanner(): ScannerState {
   return {
@@ -126,6 +143,7 @@ export function newScanner(): ScannerState {
     captured: [],
     calibration: defaultCalibration(),
     goodFrames: 0,
+    attempts: 0,
     message: SCAN_ORDER[0].turn,
     preview: null,
   };
@@ -184,6 +202,7 @@ export function pushFrame(state: ScannerState, analysis: FrameAnalysis): ScanUpd
     if (analysis.quality.ok) {
       state.phase = 'cerco';
       state.goodFrames = 0;
+      state.attempts = 0;
       resetBuffer(state);
     }
     return { state };
@@ -207,10 +226,12 @@ export function pushFrame(state: ScannerState, analysis: FrameAnalysis): ScanUpd
     if (buf.cells[i].length > 9) buf.cells[i].shift();
   });
   state.goodFrames++;
+  state.attempts++;
 
   // Anteprima dal vivo con i colori fusi finora.
   const fused = buf.cells.map(fuse);
-  const guesses = fused.map((s) => classifySticker(s, state.calibration));
+  // Classifichiamo i nove insieme: e' il loro insieme a dire com'era la luce.
+  const guesses = classificaFaccia(fused, state.calibration);
   state.preview = {
     colors: guesses.map((g) => g.color),
     confidences: guesses.map((g) => g.confidence),
@@ -227,15 +248,20 @@ export function pushFrame(state: ScannerState, analysis: FrameAnalysis): ScanUpd
     return { state };
   }
 
-  if (weakest < MIN_CONFIDENCE) {
-    // Lettura instabile: non accettiamo, chiediamo di avvicinare.
-    state.goodFrames = Math.max(0, state.goodFrames - 2);
+  if (weakest < MIN_CONFIDENCE && state.attempts < FRAMES_BEFORE_GIVING_UP) {
+    // Lettura incerta: insistiamo ancora un po', spiegando cosa non torna.
     const worst = guesses.reduce((a, b) => (a.confidence <= b.confidence ? a : b));
     state.message = `Non sono sicuro di un colore: potrebbe essere ${COLOR_LABEL_IT[worst.color]} o ${COLOR_LABEL_IT[worst.runnerUp]}. Puoi avvicinare un po il cubo?`;
     return { state, speak: state.message };
   }
 
-  return captureCurrentFace(state, fused, guesses.map((g) => g.confidence), guesses.map((g) => g.color));
+  return captureCurrentFace(
+    state,
+    fused,
+    guesses.map((g) => g.confidence),
+    guesses.map((g) => g.color),
+    weakest < MIN_CONFIDENCE,
+  );
 }
 
 function captureCurrentFace(
@@ -243,6 +269,7 @@ function captureCurrentFace(
   samples: Rgb[],
   confidences: number[],
   colors: CubeColor[],
+  incerta = false,
 ): ScanUpdate {
   const step = SCAN_ORDER[state.stepIndex];
 
@@ -256,13 +283,17 @@ function captureCurrentFace(
     colors,
     confidences,
     frames: state.goodFrames,
+    incerta,
   };
   state.captured.push(face);
   resetBuffer(state);
   state.goodFrames = 0;
+  state.attempts = 0;
   state.preview = null;
 
-  const recognised = `${COLOR_EMOJI[centerColor]} Faccia ${COLOR_LABEL_IT[centerColor]} riconosciuta!`;
+  const recognised = incerta
+    ? `${COLOR_EMOJI[centerColor]} Faccia ${COLOR_LABEL_IT[centerColor]} presa! Un paio di colori li ricontrolliamo insieme dopo.`
+    : `${COLOR_EMOJI[centerColor]} Faccia ${COLOR_LABEL_IT[centerColor]} riconosciuta!`;
 
   if (state.captured.length >= 6) {
     state.phase = 'completata';
@@ -283,6 +314,7 @@ export function readyForNextFace(state: ScannerState): ScannerState {
   if (state.phase === 'gira-il-cubo' || state.phase === 'spiegazione') {
     state.phase = 'cerco';
     state.goodFrames = 0;
+    state.attempts = 0;
     resetBuffer(state);
   }
   return state;

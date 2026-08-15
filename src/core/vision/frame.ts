@@ -6,20 +6,15 @@
  * la scansione fluida anche su telefoni economici.
  */
 
-import { Rgb } from './color';
+import { Rgb, colorDistance, rgbToLab } from './color';
+import { Mat3, applyMat } from './homography';
+import { GridResult, Rect, trovaCubo } from './grid';
 
 export interface Frame {
   /** RGBA, 4 byte per pixel. */
   data: Uint8ClampedArray;
   width: number;
   height: number;
-}
-
-export interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
 }
 
 export function px(f: Frame, x: number, y: number): Rgb {
@@ -70,6 +65,8 @@ export interface QualityReport {
     motion: number;
     gridStrength: number;
     coverage: number;
+    /** Quanto qualcosa copriva il quadratino peggiore. */
+    outliers: number;
   };
 }
 
@@ -117,108 +114,13 @@ export function motionScore(a: Float32Array, b: Float32Array): number {
 /* Ricerca della griglia 3x3                                           */
 /* ------------------------------------------------------------------ */
 
-export interface GridResult {
-  found: boolean;
-  /** Confini delle celle sull'asse X (4 valori: bordo, 1/3, 2/3, bordo). */
-  xs: number[];
-  ys: number[];
-  /** Quanto sono nette le linee della griglia (0..1). */
-  strength: number;
-  /** Frazione della zona di inquadratura occupata dal cubo (0..1). */
-  coverage: number;
-}
-
 /**
- * Trova le due righe e le due colonne che separano i nove quadratini.
- *
- * Un adesivo e' uniforme al suo interno e stacca nettamente dal vicino: nel
- * profilo dei gradienti verticali compaiono quindi due picchi interni netti
- * (piu' i due bordi esterni). Cerchiamo esattamente quelli, intorno alle
- * posizioni attese (un terzo e due terzi), invece di scansionare tutta
- * l'immagine: la cornice di guida sullo schermo dice gia' al bambino dove
- * mettere il cubo, quindi ci serve solo la messa a punto fine.
+ * La ricerca vera e propria sta in grid.ts: trova il cubo ovunque sia
+ * nell'inquadratura, di qualunque dimensione, inclinato o in prospettiva.
+ * Qui restiamo con la firma comoda per chi analizza un fotogramma.
  */
-export function detectGrid(f: Frame, region: Rect): GridResult {
-  const gray = grayscale(f);
-  const { x, y, w, h } = region;
-
-  const colProfile = new Float32Array(Math.max(1, Math.round(w)));
-  const rowProfile = new Float32Array(Math.max(1, Math.round(h)));
-
-  for (let j = 1; j < h - 1; j++) {
-    for (let i = 1; i < w - 1; i++) {
-      const gx = Math.round(x + i);
-      const gy = Math.round(y + j);
-      if (gx <= 0 || gy <= 0 || gx >= f.width - 1 || gy >= f.height - 1) continue;
-      const p = gy * f.width + gx;
-      colProfile[i] += Math.abs(gray[p + 1] - gray[p - 1]);
-      rowProfile[j] += Math.abs(gray[p + f.width] - gray[p - f.width]);
-    }
-  }
-
-  const xs = findInternalLines(colProfile, w);
-  const ys = findInternalLines(rowProfile, h);
-
-  const strength = Math.min(1, (xs.strength + ys.strength) / 2);
-  const found = xs.ok && ys.ok && strength > 0.2;
-
-  // Copertura: quanto della cornice e' occupato dal cubo. Con la messa a punto
-  // fine sui bordi interni possiamo stimare il lato del cubo.
-  const cellW = (xs.lines[2] - xs.lines[1]) || w / 3;
-  const cellH = (ys.lines[2] - ys.lines[1]) || h / 3;
-  const coverage = Math.min(1, ((cellW * 3) / w + (cellH * 3) / h) / 2);
-
-  return {
-    found,
-    xs: xs.lines.map((v) => x + v),
-    ys: ys.lines.map((v) => y + v),
-    strength,
-    coverage,
-  };
-}
-
-/**
- * Cerca i due massimi del profilo dei gradienti vicino a 1/3 e 2/3.
- * Restituisce i quattro confini delle celle (0, l1, l2, size).
- */
-function findInternalLines(
-  profile: Float32Array,
-  size: number,
-): { ok: boolean; lines: number[]; strength: number } {
-  const n = profile.length;
-  if (n < 9) return { ok: false, lines: [0, size / 3, (2 * size) / 3, size], strength: 0 };
-
-  const mean = profile.reduce((a, b) => a + b, 0) / n;
-  const window = Math.max(2, Math.round(n * 0.12));
-
-  const peakNear = (center: number): { pos: number; value: number } => {
-    let bestPos = center;
-    let bestVal = -1;
-    const from = Math.max(1, Math.round(center - window));
-    const to = Math.min(n - 2, Math.round(center + window));
-    for (let i = from; i <= to; i++) {
-      if (profile[i] > bestVal) {
-        bestVal = profile[i];
-        bestPos = i;
-      }
-    }
-    return { pos: bestPos, value: bestVal };
-  };
-
-  const p1 = peakNear(n / 3);
-  const p2 = peakNear((2 * n) / 3);
-
-  // Un picco vale se stacca chiaramente dalla media del profilo.
-  const rel = (v: number) => (mean <= 1e-6 ? 0 : Math.min(1, (v / mean - 1) / 1.5));
-  const strength = (rel(p1.value) + rel(p2.value)) / 2;
-  const ok = p2.pos - p1.pos > n * 0.15 && strength > 0.15;
-
-  const scale = size / n;
-  return {
-    ok,
-    lines: [0, p1.pos * scale, p2.pos * scale, size],
-    strength,
-  };
+export function detectGrid(f: Frame, region: Rect, precedente?: GridResult): GridResult {
+  return trovaCubo(grayscale(f), f.width, f.height, region, { precedente });
 }
 
 /* ------------------------------------------------------------------ */
@@ -227,68 +129,118 @@ function findInternalLines(
 
 export interface CellSample {
   color: Rgb;
-  /** Quanto e' uniforme la cella: alta variabilita' = riflesso, dito, bordo. */
+  /**
+   * Quanto e' disomogenea la PARTE BUONA della cella, dopo aver scartato gli
+   * estremi. Misura la qualita' del colore letto, non l'imprecisione del
+   * campionamento.
+   */
   spread: number;
-  /** Frazione di pixel bruciati (bianco pieno): tipico dei riflessi. */
+  /**
+   * Frazione di punti nettamente diversi dal resto: e' il segnale di "qualcosa
+   * copre parte del quadratino" (una mano, un dito, un riflesso concentrato).
+   *
+   * E' diverso da `spread`, e la differenza conta: un cubo inclinato dava
+   * spread alto pur essendo perfettamente leggibile, mentre una mano che ne
+   * copriva meta' dava spread piu' basso. Misurando la frazione di punti
+   * "fuori dal gruppo" i due casi si separano bene.
+   */
+  outliers: number;
+  /** Frazione di punti con almeno un canale saturo. */
   clipped: number;
 }
 
 /**
- * Preleva il colore di una cella prendendo la MEDIANA di tanti punti nella
- * parte centrale: cosi un riflesso o il bordo nero non spostano il risultato
- * come farebbe una media.
+ * Preleva il colore di una cella campionando tanti punti nella sua parte
+ * centrale, attraverso l'omografia: cosi i punti seguono il cubo anche quando
+ * e' inclinato o in prospettiva, invece di cadere sui vicini.
+ *
+ * Il colore finale e' una MEDIA TAGLIATA in spazio Lab: si buttano via i punti
+ * piu' lontani dal centro del gruppo (riflessi, un dito, il bordo nero) e si fa
+ * la media dei restanti. Sulla mediana per canale ha un vantaggio preciso: la
+ * mediana presa canale per canale puo' restituire un colore che nella cella non
+ * c'era affatto, mentre questa resta sempre un colore davvero presente.
  */
-export function sampleCell(f: Frame, x0: number, y0: number, x1: number, y1: number): CellSample {
-  const insetX = (x1 - x0) * 0.22;
-  const insetY = (y1 - y0) * 0.22;
-  const ax = x0 + insetX;
-  const ay = y0 + insetY;
-  const bx = x1 - insetX;
-  const by = y1 - insetY;
-
-  const rs: number[] = [];
-  const gs: number[] = [];
-  const bs: number[] = [];
+export function sampleCellFromQuad(
+  f: Frame,
+  H: Mat3,
+  riga: number,
+  colonna: number,
+): CellSample {
+  const punti: Rgb[] = [];
   let clipped = 0;
-  let total = 0;
 
-  const steps = 6;
-  for (let i = 0; i < steps; i++) {
-    for (let j = 0; j < steps; j++) {
-      const p = px(f, ax + ((bx - ax) * i) / (steps - 1), ay + ((by - ay) * j) / (steps - 1));
-      rs.push(p.r);
-      gs.push(p.g);
-      bs.push(p.b);
-      // Basta UN canale saturo per rovinare la tinta: un riflesso su un adesivo
-      // arancione manda il rosso a fondo scala e lo fa sembrare giallo.
+  const passi = 7;
+  // Restiamo nel 52% centrale della cella: fuori ci sono il bordo nero e il
+  // riflesso che di solito si forma sullo spigolo dell'adesivo.
+  const da = 0.24;
+  const a = 0.76;
+
+  for (let i = 0; i < passi; i++) {
+    for (let j = 0; j < passi; j++) {
+      const u = (colonna + da + ((a - da) * i) / (passi - 1)) / 3;
+      const v = (riga + da + ((a - da) * j) / (passi - 1)) / 3;
+      const [x, y] = applyMat(H, u, v);
+      if (x < 0 || y < 0 || x >= f.width || y >= f.height) continue;
+      const p = px(f, x, y);
+      punti.push(p);
       if (p.r >= 250 || p.g >= 250 || p.b >= 250) clipped++;
-      total++;
     }
   }
 
-  const median = (arr: number[]) => {
-    const s = arr.slice().sort((a, b) => a - b);
-    return s[Math.floor(s.length / 2)];
-  };
-  const color = { r: median(rs), g: median(gs), b: median(bs) };
-
-  // Dispersione: distanza media dal valore mediano, normalizzata.
-  let spread = 0;
-  for (let i = 0; i < rs.length; i++) {
-    spread +=
-      Math.abs(rs[i] - color.r) + Math.abs(gs[i] - color.g) + Math.abs(bs[i] - color.b);
+  if (punti.length === 0) {
+    return { color: { r: 0, g: 0, b: 0 }, spread: 1, outliers: 1, clipped: 1 };
   }
-  spread = spread / rs.length / 3 / 255;
 
-  return { color, spread, clipped: total === 0 ? 0 : clipped / total };
+  const labs = punti.map(rgbToLab);
+  const medio = {
+    L: labs.reduce((s, l) => s + l.L, 0) / labs.length,
+    a: labs.reduce((s, l) => s + l.a, 0) / labs.length,
+    b: labs.reduce((s, l) => s + l.b, 0) / labs.length,
+  };
+  const distanze = labs.map((l) => colorDistance(l, medio));
+  const ordinate = distanze.slice().sort((x, y) => x - y);
+  // Teniamo il 60% dei punti piu' vicini al centro del gruppo.
+  const soglia = ordinate[Math.floor(ordinate.length * 0.6)];
+
+  let sr = 0;
+  let sg = 0;
+  let sb = 0;
+  let n = 0;
+  for (let i = 0; i < punti.length; i++) {
+    if (distanze[i] > soglia) continue;
+    sr += punti[i].r;
+    sg += punti[i].g;
+    sb += punti[i].b;
+    n++;
+  }
+  const color = n > 0 ? { r: sr / n, g: sg / n, b: sb / n } : punti[0];
+
+  // Dispersione della parte tenuta: dice quanto e' pulito il colore che usiamo.
+  let sommaTenuti = 0;
+  for (let i = 0; i < punti.length; i++) if (distanze[i] <= soglia) sommaTenuti += distanze[i];
+  const spread = Math.min(1, sommaTenuti / Math.max(1, n) / 40);
+
+  // Punti nettamente fuori dal gruppo: e' il segnale dell'occlusione. La soglia
+  // e' relativa alla dispersione della cella stessa, cosi funziona sia su un
+  // adesivo scuro sia su uno chiaro.
+  const limite = Math.max(14, (sommaTenuti / Math.max(1, n)) * 4);
+  let fuori = 0;
+  for (const d of distanze) if (d > limite) fuori++;
+
+  return {
+    color,
+    spread,
+    outliers: fuori / punti.length,
+    clipped: clipped / punti.length,
+  };
 }
 
-/** Preleva tutti e nove i quadratini a partire dalla griglia trovata. */
+/** Preleva tutti e nove i quadratini a partire dal cubo trovato. */
 export function sampleFace(f: Frame, grid: GridResult): CellSample[] {
   const out: CellSample[] = [];
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
-      out.push(sampleCell(f, grid.xs[col], grid.ys[row], grid.xs[col + 1], grid.ys[row + 1]));
+      out.push(sampleCellFromQuad(f, grid.H, row, col));
     }
   }
   return out;
@@ -302,6 +254,8 @@ export interface AnalyzeOptions {
   region: Rect;
   /** Grigio del fotogramma precedente, per capire se il cubo si muove. */
   previousGray?: Float32Array;
+  /** Cubo trovato nel fotogramma precedente: rende la ricerca molto piu' veloce. */
+  previousGrid?: GridResult;
 }
 
 export interface FrameAnalysis {
@@ -313,7 +267,9 @@ export interface FrameAnalysis {
 
 export function analyzeFrame(f: Frame, opts: AnalyzeOptions): FrameAnalysis {
   const gray = grayscale(f);
-  const grid = detectGrid(f, opts.region);
+  const grid = trovaCubo(gray, f.width, f.height, opts.region, {
+    precedente: opts.previousGrid,
+  });
 
   let brightness = 0;
   for (let i = 0; i < gray.length; i++) brightness += gray[i];
@@ -325,24 +281,41 @@ export function analyzeFrame(f: Frame, opts: AnalyzeOptions): FrameAnalysis {
   const cells = grid.found ? sampleFace(f, grid) : null;
   let clipped = 0;
   let spread = 0;
+  let outliers = 0;
   if (cells) {
     for (const c of cells) {
       clipped = Math.max(clipped, c.clipped);
       spread = Math.max(spread, c.spread);
+      outliers = Math.max(outliers, c.outliers);
     }
   }
 
   const issues: QualityIssue[] = [];
   if (!grid.found) issues.push('non-trovato');
-  else if (grid.coverage < 0.55) issues.push('lontano');
+  // Sotto meta' del fotogramma i colori cominciano a impastarsi; il banco di
+  // prova dice che fino a circa 0.45 la lettura resta sopra il 98%.
+  else if (grid.coverage < 0.45) issues.push('lontano');
   if (brightness < 45) issues.push('buio');
   if (brightness > 218) issues.push('troppa-luce');
-  if (clipped > 0.25) issues.push('riflesso');
+  /*
+   * Niente controllo sui pixel saturi come sbarramento.
+   *
+   * Da una sola immagine piccola non si distingue un adesivo BIANCO ben
+   * illuminato (satura, ed e' giusto cosi) da un riflesso su un adesivo
+   * colorato: misurato, entrambi danno saturazione piena. Bloccare su questo
+   * significava rifiutare all'infinito facce perfettamente leggibili.
+   *
+   * Il riflesso che rovina davvero un colore viene preso piu' avanti, dove ci
+   * sono piu' informazioni: dalla sicurezza della classificazione, dalla
+   * fusione di piu' fotogrammi, dal controllo incrociato fra le facce e dal
+   * vincolo dei nove per colore. Qui il dato resta nei dettagli, per l'area
+   * avanzata.
+   */
   // Una faccia a fuoco, anche ridimensionata a 160 px, ha bordi netti fra gli
   // adesivi e supera abbondantemente questa soglia; sotto vuol dire mosso.
   if (sharp < 35) issues.push('sfocato');
   if (motion > 0.045) issues.push('movimento');
-  if (spread > 0.16) issues.push('coperto');
+  if (outliers > 0.3) issues.push('coperto');
 
   // Punteggio complessivo, usato per decidere se il fotogramma vale.
   const norm = (v: number, good: number, bad: number) =>
@@ -351,9 +324,9 @@ export function analyzeFrame(f: Frame, opts: AnalyzeOptions): FrameAnalysis {
     (grid.found ? 1 : 0) *
     (0.3 * norm(sharp, 90, 8) +
       0.2 * norm(1 - motion, 1, 0.9) +
-      0.2 * norm(grid.coverage, 0.9, 0.4) +
-      0.15 * norm(1 - clipped, 1, 0.6) +
-      0.15 * norm(1 - spread, 1, 0.75));
+      0.2 * norm(grid.coverage, 0.85, 0.35) +
+      0.15 * norm(1 - outliers, 1, 0.45) +
+      0.15 * norm(1 - spread, 1, 0.6));
 
   const first = issues[0];
   return {
@@ -369,6 +342,7 @@ export function analyzeFrame(f: Frame, opts: AnalyzeOptions): FrameAnalysis {
         motion,
         gridStrength: grid.strength,
         coverage: grid.coverage,
+        outliers,
       },
     },
     grid,
@@ -376,3 +350,5 @@ export function analyzeFrame(f: Frame, opts: AnalyzeOptions): FrameAnalysis {
     gray,
   };
 }
+
+export type { GridResult, Rect };

@@ -165,6 +165,67 @@ export function applyWhiteBalance(calib: Calibration, s: Rgb): Rgb {
 }
 
 /* ------------------------------------------------------------------ */
+/* Normalizzazione dell'esposizione                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Riporta i nove quadratini di una faccia a una luminosita' di riferimento.
+ *
+ * Serve per un problema misurato: in penombra TUTTI i colori si avvicinano fra
+ * loro, quindi tutte le distanze dai riferimenti crescono insieme e il margine
+ * fra la prima e la seconda ipotesi si assottiglia. Risultato: la lettura era
+ * giusta, ma l'app la dichiarava incerta (sicurezza 0.19 invece di 1.00) e
+ * continuava a rifiutare la faccia chiedendo al bambino di avvicinare il cubo,
+ * cosa che non c'entrava niente.
+ *
+ * Il guadagno e' UNO SOLO, uguale per i tre canali: alza o abbassa la
+ * luminosita' senza toccare la tinta.
+ *
+ * La tentazione e' di correggere canale per canale (il classico "massimo per
+ * canale" della costanza cromatica), ma su una faccia del cubo e' pericoloso:
+ * se quella faccia non ha nessun adesivo chiaro — capita spesso, per esempio
+ * con blu, rosso e verde insieme — la stima del colore della luce e' sbagliata
+ * e i colori vengono storti. Provato: rompeva la lettura dei 54 quadratini.
+ * La dominante di colore della lampadina viene gia' corretta altrove, imparata
+ * dal centro bianco (vedi applyWhiteBalance).
+ */
+export function stimaLuminosita(campioni: Rgb[]): number {
+  if (campioni.length === 0) return RIFERIMENTO_CHIARO;
+  const lumi = campioni
+    .map((c) => 0.299 * c.r + 0.587 * c.g + 0.114 * c.b)
+    .sort((a, b) => a - b);
+  // Percentile alto invece del massimo: un singolo quadratino bruciato non
+  // deve decidere per tutti.
+  return lumi[Math.min(lumi.length - 1, Math.floor(lumi.length * 0.9))];
+}
+
+/** Livello a cui portiamo il quadratino piu' chiaro: quello di un adesivo bianco. */
+const RIFERIMENTO_CHIARO = 236;
+
+export function normalizzaEsposizione(campioni: Rgb[]): Rgb[] {
+  const piuChiaro = stimaLuminosita(campioni);
+  // Guadagno limitato: senza limite, una faccia tutta scura verrebbe
+  // "schiarita" fino a inventarsi colori che non ci sono.
+  const guadagno = Math.max(0.7, Math.min(2.4, RIFERIMENTO_CHIARO / Math.max(30, piuChiaro)));
+  if (Math.abs(guadagno - 1) < 0.02) return campioni;
+  const clamp = (v: number) => Math.max(0, Math.min(255, v));
+  return campioni.map((c) => ({
+    r: clamp(c.r * guadagno),
+    g: clamp(c.g * guadagno),
+    b: clamp(c.b * guadagno),
+  }));
+}
+
+/**
+ * Classifica i nove quadratini di una faccia, normalizzando prima
+ * l'esposizione. E' il modo giusto di leggere una faccia: i quadratini vanno
+ * guardati insieme, perche' e' il loro insieme a dire com'era la luce.
+ */
+export function classificaFaccia(campioni: Rgb[], calib: Calibration): ColorGuess[] {
+  return normalizzaEsposizione(campioni).map((c) => classifySticker(c, calib));
+}
+
+/* ------------------------------------------------------------------ */
 /* Classificazione di un singolo quadratino                            */
 /* ------------------------------------------------------------------ */
 
@@ -240,8 +301,19 @@ export interface StickerAssignment {
 export function assignAllStickers(samples: Rgb[], calib: Calibration): StickerAssignment {
   if (samples.length !== 54) throw new Error('Servono esattamente 54 campioni');
 
-  const labs = samples.map((s) => rgbToLab(applyWhiteBalance(calib, s)));
-  const hsvs = samples.map((s) => rgbToHsv(applyWhiteBalance(calib, s)));
+  /*
+   * Normalizziamo FACCIA PER FACCIA, non tutte insieme: le sei facce vengono
+   * fotografate in momenti e orientamenti diversi, quindi ognuna ha la sua
+   * luce. Livellarle tutte con un unico guadagno mescolerebbe i problemi.
+   */
+  const normalizzati: Rgb[] = new Array(54);
+  for (let faccia = 0; faccia < 6; faccia++) {
+    const nove = normalizzaEsposizione(samples.slice(faccia * 9, faccia * 9 + 9));
+    for (let i = 0; i < 9; i++) normalizzati[faccia * 9 + i] = nove[i];
+  }
+
+  const labs = normalizzati.map((s) => rgbToLab(applyWhiteBalance(calib, s)));
+  const hsvs = normalizzati.map((s) => rgbToHsv(applyWhiteBalance(calib, s)));
 
   // Costo di assegnare il quadratino i al colore c.
   const cost: number[][] = labs.map((lab, i) => {

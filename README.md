@@ -176,29 +176,138 @@ fotogramma → qualità → griglia 3×3 → campionamento → colori
            → fusione multi-fotogramma → confidenza → 54 quadratini → validazione
 ```
 
-### Il problema vero: rosso contro arancione
+### Il problema vero: trovare il cubo
 
-Confrontare l'RGB di un adesivo con sei colori fissi sbaglia spesso, perché la
-luce di casa sposta i colori parecchio e rosso/arancione (come blu/verde) sono
-vicinissimi. Qui si fanno tre cose:
+Prima di leggere i colori bisogna sapere **dove sono**. La prima versione dava
+per scontato che il cubo riempisse la cornice di guida e fosse dritto:
+campionava a un terzo e due terzi del riquadro. Un banco di prova con cubi
+inclinati, spostati e in prospettiva ha detto quanto costava quell'ipotesi:
+
+| Situazione | Colori letti correttamente |
+|---|---:|
+| Frontale, luce buona | 96,5% |
+| Inclinato | 63,1% |
+| **Lontano e spostato** | **24,9%** |
+| In prospettiva | 71,1% |
+| Luce difficile | 80,7% |
+| Tutto insieme | 37,7% |
+
+Il difetto peggiore non era la percentuale: era che la griglia dichiarava di
+aver trovato il cubo il **99%** delle volte mentre campionava i pixel sbagliati.
+Sicura di sé e in errore — il modo peggiore di sbagliare.
+
+Il cubo adesso viene cercato davvero (`src/core/vision/grid.ts`), in tre passi:
+
+1. **Inclinazione.** Gli spazi neri fra gli adesivi formano due famiglie di
+   rette parallele. Proiettando il gradiente lungo direzioni ruotate, la
+   proiezione ha picchi netti solo quando la direzione è allineata a quelle
+   rette: l'angolo migliore è l'inclinazione del cubo.
+2. **Posizione e dimensione.** Lungo ciascun asse ci sono esattamente **quattro
+   rette equidistanti** (i due bordi e le due separazioni interne). Le si cerca
+   con un "pettine": si prova ogni combinazione di posizione e passo e si tiene
+   quella che raccoglie più gradiente. Così il cubo viene trovato ovunque sia e
+   di qualunque dimensione.
+3. **Prospettiva.** I quattro angoli vengono aggiustati uno alla volta per far
+   cadere le rette interne dove il gradiente è più forte. I nove quadratini si
+   campionano poi attraverso l'omografia, quindi i punti seguono il cubo anche
+   quando è inclinato in avanti.
+
+**Risultato misurato sulle stesse scene:**
+
+| Situazione | Prima | Dopo |
+|---|---:|---:|
+| Frontale, luce buona | 96,5% | **100,0%** |
+| Inclinato | 63,1% | **100,0%** |
+| Lontano e spostato | 24,9% | **98,7%** |
+| In prospettiva | 71,1% | **100,0%** |
+| Luce difficile | 80,7% | **98,7%** |
+| Tutto insieme | 37,7% | **97,0%** |
+| **Totale** | **62,6%** | **99,1%** |
+
+Errore di centratura: da 5,4 px medi (24,5 peggiore) a **3,9 px** (6,9 peggiore).
+
+**E il costo?** La ricerca completa è molto più pesante, quindi c'è una ricerca
+a due passate (prima larga e grossolana, poi stretta) e soprattutto un
+**inseguimento** fra fotogrammi: fra un fotogramma e l'altro il cubo non si
+teleporta, quindi si riparte da dov'era.
+
+| | ms per fotogramma |
+|---|---:|
+| Versione iniziale | 78,7 |
+| Con ricerca a due passate | 18,2 |
+| **Con inseguimento** (il caso normale) | **3,0** |
+
+### Leggere i colori
+
+Alla lettura vera e propria servono tre cose, e la terza è quella che conta:
 
 1. **Spazio Lab con luminosità depesata.** Ombre e riflessi cambiano la
-   luminosità, non la tinta: la distanza pesa poco la prima e molto la seconda.
-2. **Calibrazione automatica dai centri veri.** I riferimenti non sono sei
-   colori teorici ma i sei centri del cubo appena letti: la calibrazione si
-   adatta da sola a ogni cubo, ogni telefono e ogni lampadina.
-3. **Il vincolo dei nove per colore.** Alla fine ogni colore compare
-   *esattamente* nove volte. L'assegnazione finale non è una serie di scelte
-   indipendenti ma un **problema di abbinamento a costo minimo**, risolto
-   all'ottimo con l'algoritmo ungherese su una matrice 54×54. È qui che
-   rosso e arancione smettono di confondersi: un rosso incerto finisce fra i
-   rossi solo se toglierlo agli arancioni non peggiora il totale.
+   luminosità, non la tinta.
+2. **Calibrazione automatica dai centri veri**, non da sei colori teorici: si
+   adatta a ogni cubo, ogni telefono e ogni lampadina.
+3. **Il vincolo dei nove per colore.** Ogni colore compare *esattamente* nove
+   volte, quindi l'assegnazione finale è un problema di abbinamento a costo
+   minimo, risolto all'ottimo con l'algoritmo ungherese su una matrice 54×54.
+   È qui che rosso e arancione smettono di confondersi.
 
-Verificato nei test su cubi mescolati fotografati con luce calda, luce fredda e
-in penombra: 54 quadratini su 54 corretti. Con rumore volutamente esagerato la
-lettura sbaglia, ma il conteggio resta nove per colore (quindi il validatore può
-dare un messaggio utile) e i quadratini incerti finiscono nella lista da far
-ricontrollare, ordinati dal meno sicuro.
+A questi si è aggiunta la **normalizzazione dell'esposizione**, che ha risolto
+un difetto misurato: in penombra tutti i colori si avvicinano fra loro, tutte le
+distanze crescono insieme e il margine fra prima e seconda ipotesi si
+assottiglia. La lettura era giusta ma l'app la dichiarava incerta e continuava
+a chiedere di avvicinare il cubo — cosa che non c'entrava niente.
+
+| Penombra | Sicurezza minima | Celle incerte |
+|---|---:|---:|
+| Prima | 0,19 | 4-6 su 9 |
+| Dopo | **0,97** | **0** |
+
+Il guadagno è **uno solo per i tre canali**, non uno per canale: correggere
+canale per canale (il classico "massimo per canale" della costanza cromatica) è
+allettante ma pericoloso su una faccia senza adesivi chiari — provato, rompeva
+la lettura dei 54 quadratini. La dominante della lampadina viene già corretta
+altrove, imparata dal centro bianco.
+
+### Tre controlli che sono stati tolti, e perché
+
+Misurare serve anche a scoprire che una difesa non difende:
+
+- **"Riflesso" dai pixel saturi.** Da un'immagine piccola non si distingue un
+  adesivo bianco ben illuminato (satura, ed è giusto) da un riflesso su un
+  adesivo colorato: misurato, danno entrambi saturazione piena. Bloccare su
+  quel segnale rifiutava all'infinito facce leggibilissime. La difesa vera è
+  che **il riflesso si sposta** quando il bambino muove il cubo, mentre il
+  colore resta: la mediana su più fotogrammi lo cancella da sola. C'è un test
+  che lo verifica, e un secondo che documenta il limite del singolo fotogramma.
+- **"Coperto" dalla disomogeneità della cella.** Provate tre metriche diverse
+  (dispersione, frazione di punti fuori gruppo, forza della griglia): nessuna
+  separa una mano che copre il cubo da una scena buona ma inclinata. In un caso
+  la scena *buona* faceva peggio della mano. Un rilevatore che non discrimina è
+  peggio di nessun rilevatore, perché blocca gli utenti onesti.
+- **Il blocco sulla sicurezza bassa.** Un solo quadratino ambiguo bloccava
+  tutto: lo scanner ripeteva "avvicina il cubo" all'infinito. Misurato: 7
+  scansioni su 12 non arrivavano mai in fondo, pur leggendo il 100% dei colori
+  quando ci arrivavano. Ora dopo un po' di tentativi la faccia viene presa lo
+  stesso e i quadratini incerti vengono segnati con ⚠️ nell'anteprima, dove
+  bastano due tocchi per correggerli. Un bambino che gira il cubo per un minuto
+  senza che succeda niente, molla.
+
+### La misura che conta davvero
+
+Sei facce di un cubo vero, in condizioni volutamente scomode (scala 0,55-0,85,
+inclinazione ±10°, prospettiva, spostamento, luce variabile, rumore), dalla
+fotocamera fino al cubo validato:
+
+| | |
+|---|---:|
+| Scansioni perfette (54/54) | **11 / 12** |
+| Quadratini letti correttamente | **99,4%** |
+| Scansioni arrivate in fondo | **12 / 12** |
+| **Cubi sbagliati accettati per errore** | **0** |
+
+L'ultima riga è la più importante, ed è un test che fallisce se mai diventasse
+diversa da zero: la scansione imperfetta viene **rifiutata dal validatore**, che
+mostra al bambino la faccia sospetta da correggere, invece di consegnargli una
+soluzione che non funziona.
 
 ### Qualità e acquisizione automatica
 
@@ -454,8 +563,11 @@ npx expo run:android      # oppure run:ios
 ## Test
 
 ```bash
-npm test        # 132 test
+npm test        # 141 test
 npm run typecheck
+
+# La misura del riconoscimento, con i numeri per livello di difficolta':
+npx vitest run tests/bench-vision.test.ts
 ```
 
 I test non sono decorativi: verificano le cose che sarebbero difficili da
@@ -468,7 +580,8 @@ scoprire a mano su un telefono.
 | `kociemba.test.ts` | Che 100 soluzioni riportino davvero al cubo risolto; il superflip; che la fase 1 entri davvero nel sottogruppo |
 | `beginner.test.ts` | 200 cubi risolti, e che ogni fase lasci intatto quello che le precedenti hanno sistemato |
 | `kids.test.ts` | Che in modalità facile non compaia mai la notazione; che frecce e frasi corrispondano al movimento reale; che nessun badge premi la frequenza d'uso |
-| `vision.test.ts` | Griglia, qualità (sfocato, buio, riflessi, movimento) e lettura dei 54 quadratini con luce calda, fredda e in penombra |
+| `vision.test.ts` | Griglia, qualità (sfocato, buio, movimento), lettura dei 54 quadratini con luce calda, fredda e in penombra, e la cancellazione dei riflessi per fusione |
+| `bench-vision.test.ts` | Il banco di prova: cubi inclinati, lontani, in prospettiva e con luce difficile, fino alla scansione completa delle sei facce |
 | `app-logic.test.ts` | La mappa cubetti 3D → quadratini, la conversione colori↔facce con qualunque orientamento, il filtro delle risposte di Gemini |
 | `pwa.test.ts` | I meta iOS, il manifest, il service worker (percorsi relativi e ricerca del pacchetto), e che nessun file punti a un CDN esterno |
 
@@ -515,14 +628,17 @@ Per onestà, visto che questa è una prima versione completa:
   ed è quello che conta di più: le soglie di qualità dell'immagine
   (`src/core/vision/frame.ts`) sono tarate su immagini sintetiche e quasi
   sicuramente andranno ritoccate sulle prime foto reali.
-- La griglia 3×3 viene cercata **dentro la cornice di guida** mostrata sullo
-  schermo, con messa a punto fine sui bordi degli adesivi. Non c'è un
-  rilevamento libero del contorno del cubo in tutta l'immagine: per un bambino
-  che deve comunque inquadrare, la cornice è più semplice da usare, ma va detto
-  che è una semplificazione rispetto a un rilevamento completo.
-- La correzione prospettica assume che il cubo sia ragionevolmente frontale.
-  Un cubo molto inclinato viene rifiutato dai controlli di qualità invece che
-  raddrizzato.
+- Il riconoscimento è misurato su **immagini sintetiche**, non su fotografie
+  vere. Le scene coprono inclinazione, prospettiva, scala, spostamento, luce
+  calda e fredda, penombra, gradienti, riflessi, rumore e sfondo non uniforme —
+  ma restano immagini generate. Su foto reali entrano in gioco cose che non
+  simulo: messa a fuoco della fotocamera del telefono, compressione JPEG,
+  adesivi consumati o sostituiti, cubi con colori non standard.
+- Non c'è rilevamento di occlusioni sul singolo fotogramma: una mano che copre
+  il cubo viene letta con sicurezza come colori sbagliati, e la cosa viene presa
+  più avanti (vincolo dei nove per colore, controllo incrociato, validatore) o
+  dal bambino nell'anteprima. Le metriche provate per rilevarla non
+  discriminavano (vedi sopra).
 - Icona, splash screen e suoni non ci sono ancora (l'app usa emoji e colori).
 
 **Idee per il seguito**
