@@ -377,6 +377,47 @@ Ci sono 19 test (`tests/pwa.test.ts`) che controllano questi file: sono verifich
 noiose ma preziose, perché una riga tolta per sbaglio da `index.html` non si nota
 provando l'app nel browser — si scopre solo dopo averla installata.
 
+
+### Pubblicarla su GitHub Pages
+
+Il sito e' gia' costruito e caricato nel ramo `gh-pages`. Per farlo comparire
+online servono due impostazioni, una volta sola:
+
+1. **Settings → General → Danger Zone → Change visibility → Public**
+   (GitHub Pages non e' disponibile sui repository privati con account gratuito).
+2. **Settings → Pages → Source: «Deploy from a branch»**, ramo `gh-pages`,
+   cartella `/ (root)` → Save.
+
+Dopo qualche minuto il sito è su **https://mel0mac86.github.io/cubo/**
+
+Da quel momento il sito si aggiorna da solo: `.github/workflows/pages.yml`
+ricostruisce e ripubblica a ogni push, dopo aver eseguito test e typecheck.
+
+Per costruirlo a mano:
+
+```bash
+node scripts/build-pages.mjs /cubo   # sottocartella (GitHub Pages)
+node scripts/build-pages.mjs         # radice del dominio (Netlify, Vercel...)
+```
+
+Lo script **si rifiuta** di dichiarare il sito pronto se trova una chiave nel
+pacchetto, un riferimento a un CDN esterno, un percorso di base sbagliato o un
+file mancante. Non è zelo eccessivo: ha già bloccato due pubblicazioni sbagliate
+(vedi sotto).
+
+⚠️ **Il sito pubblicato non contiene la chiave di Gemini**, ed è voluto: le
+variabili `EXPO_PUBLIC_` finiscono dentro il pacchetto JavaScript, e un sito
+pubblico è leggibile da chiunque. Sul sito pubblicato Rubi usa quindi le
+spiegazioni scritte a mano — l'app funziona esattamente uguale.
+
+#### Tre trappole di GitHub Pages, e come sono state evitate
+
+| Trappola | Cosa sarebbe successo | Rimedio |
+|---|---|---|
+| Il sito sta in `/cubo/`, non alla radice | Con i percorsi assoluti l'app cerca il proprio codice fuori dal sito: schermo viola vuoto | `experiments.baseUrl` + percorsi relativi ovunque |
+| Pages passa i file da Jekyll | Jekyll **ignora** le cartelle che iniziano con `_`: sparisce `_expo/`, cioè tutto il codice | file `.nojekyll` |
+| Nessun fallback per indirizzi sconosciuti | Pagina di errore di GitHub invece dell'app | `404.html` uguale a `index.html` |
+
 ### Differenze rispetto alle build native
 
 | | Nativa (App Store / TestFlight) | PWA su iPhone |
@@ -413,7 +454,7 @@ npx expo run:android      # oppure run:ios
 ## Test
 
 ```bash
-npm test        # 130 test
+npm test        # 132 test
 npm run typecheck
 ```
 
@@ -429,7 +470,7 @@ scoprire a mano su un telefono.
 | `kids.test.ts` | Che in modalità facile non compaia mai la notazione; che frecce e frasi corrispondano al movimento reale; che nessun badge premi la frequenza d'uso |
 | `vision.test.ts` | Griglia, qualità (sfocato, buio, riflessi, movimento) e lettura dei 54 quadratini con luce calda, fredda e in penombra |
 | `app-logic.test.ts` | La mappa cubetti 3D → quadratini, la conversione colori↔facce con qualunque orientamento, il filtro delle risposte di Gemini |
-| `pwa.test.ts` | I meta iOS, il manifest, il service worker, e che nessun file punti a un CDN esterno |
+| `pwa.test.ts` | I meta iOS, il manifest, il service worker (percorsi relativi e ricerca del pacchetto), e che nessun file punti a un CDN esterno |
 
 Il test di stress su 5000 cubi non è nella suite (dura circa un minuto); i
 risultati sono riportati sopra.
@@ -451,14 +492,23 @@ Per onestà, visto che questa è una prima versione completa:
   scelta modalità, inserimento colori, scuola di Rubi, minigiochi e area
   genitore, e **staccando la rete e ricaricando l'app riparte lo stesso**.
 
-> Questo collaudo non è stato una formalità: ha trovato due difetti seri che
+> Questo collaudo non è stato una formalità: ha trovato **quattro** difetti che
 > nessun test e nessuna compilazione avevano visto. Il primo era un **ciclo
 > infinito all'avvio** — la schermata iniziale chiedeva un mescolamento fisso
 > passando un generatore casuale degenere, e la funzione che sceglieva le mosse
 > riprovava all'infinito: l'app si sarebbe bloccata su schermo vuoto **su
 > qualunque piattaforma**, iPhone compreso. Il secondo era la richiesta al CDN
-> descritta nella sezione Privacy. Morale: «compila» e «i test passano» non
-> vogliono dire «parte».
+> descritta nella sezione Privacy. Il terzo: **senza rete restava una pagina
+> vuota**, perché il pacchetto JavaScript ha l'impronta del contenuto nel nome
+> (quindi non si può elencare a mano) e alla prima visita viene scaricato prima
+> che il service worker sia attivo — non finiva mai in cache; ora il service
+> worker se lo va a cercare dentro `index.html` mentre si installa. Il quarto lo
+> ha trovato il controllo del build: **la chiave di Gemini finiva nel sito
+> pubblico** anche togliendola dall'ambiente, perché Expo rilegge `.env` da sé e
+> Metro teneva in cache la trasformazione con la chiave già dentro.
+>
+> Morale: «compila» e «i test passano» non vogliono dire «parte», e «l'ho tolta
+> dall'ambiente» non vuol dire «non è nel pacchetto».
 
 **Non ancora verificato**
 - **Nessuna prova su un telefono vero con un cubo vero.** È il passo successivo,
