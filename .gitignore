@@ -1,0 +1,27 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+npm-debug.*
+yarn-error.*
+
+# Secrets — never commit real keys
+.env
+.env.local
+.env.*.local
+
+# Native build output
+android/
+ios/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+coverage/
