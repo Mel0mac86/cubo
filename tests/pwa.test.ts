@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -131,5 +131,78 @@ describe('service worker', () => {
 
   it("l'installazione non fallisce se manca un file", () => {
     expect(sw).toMatch(/cache\.add\(url\)\.catch/);
+  });
+});
+
+describe('niente contatti con siti terzi', () => {
+  /**
+   * Questo controllo nasce da un problema vero, trovato solo aprendo l'app in
+   * un browser: la libreria della fotocamera di Expo, nella sua versione web,
+   * crea un lettore di codici QR che scarica jsQR da un CDN esterno gia' al
+   * caricamento del modulo — bastava importarla per contattare jsdelivr, anche
+   * senza aprire la fotocamera. Noi i codici QR non li leggiamo, e l'app
+   * promette al genitore di non contattare nessuno.
+   *
+   * La soluzione e' avere due file separati: sul web si usa direttamente
+   * getUserMedia, cosi expo-camera non entra proprio nel pacchetto.
+   */
+  const sorgenti = (dir: string): string[] => {
+    const out: string[] = [];
+    const visita = (d: string) => {
+      for (const e of readdirSync(d, { withFileTypes: true })) {
+        const p = join(d, e.name);
+        if (e.isDirectory()) visita(p);
+        else if (/\.(ts|tsx)$/.test(e.name)) out.push(p);
+      }
+    };
+    visita(dir);
+    return out;
+  };
+
+  const files = sorgenti(join(root, 'src'));
+
+  it('esiste una versione web della fotocamera', () => {
+    expect(existsSync(join(root, 'src/ui/components/CameraSurface.web.tsx'))).toBe(true);
+    expect(existsSync(join(root, 'src/ui/components/CameraSurface.tsx'))).toBe(true);
+  });
+
+  it('expo-camera e importato solo dal file nativo della fotocamera', () => {
+    const colpevoli = files.filter(
+      (f) =>
+        /from ['"]expo-camera['"]/.test(readFileSync(f, 'utf8')) &&
+        !f.endsWith('CameraSurface.tsx'),
+    );
+    expect(colpevoli.map((f) => f.replace(root, ''))).toEqual([]);
+  });
+
+  it('la versione web della fotocamera non importa expo-camera', () => {
+    const web = readFileSync(join(root, 'src/ui/components/CameraSurface.web.tsx'), 'utf8');
+    expect(web).not.toMatch(/expo-camera/);
+    expect(web).toMatch(/getUserMedia/);
+  });
+
+  it("nessun file del progetto punta a un CDN esterno", () => {
+    const cdn = /https?:\/\/(cdn\.|unpkg\.com|cdnjs\.|ajax\.googleapis)/;
+    const colpevoli = files.filter((f) => cdn.test(readFileSync(f, 'utf8')));
+    expect(colpevoli.map((f) => f.replace(root, ''))).toEqual([]);
+  });
+
+  it("l'unico indirizzo esterno usato e quello di Gemini, ed e facoltativo", () => {
+    const conRete = files.filter((f) => /https:\/\//.test(readFileSync(f, 'utf8')));
+    const domini = new Set<string>();
+    for (const f of conRete) {
+      for (const m of readFileSync(f, 'utf8').matchAll(/https:\/\/([a-z0-9.-]+)/g)) {
+        domini.add(m[1]);
+      }
+    }
+    expect([...domini]).toEqual(['generativelanguage.googleapis.com']);
+    // ...e la chiamata parte solo se un adulto ha configurato la chiave.
+    const gemini = readFileSync(join(root, 'src/services/gemini.ts'), 'utf8');
+    expect(gemini).toMatch(/if \(!isGeminiConfigured\(\)\) return null/);
+  });
+
+  it('la fotocamera web si spegne quando si esce dalla schermata', () => {
+    const web = readFileSync(join(root, 'src/ui/components/CameraSurface.web.tsx'), 'utf8');
+    expect(web).toMatch(/getTracks\(\)\.forEach\(\(t\) => t\.stop\(\)\)/);
   });
 });

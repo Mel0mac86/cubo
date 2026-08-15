@@ -270,6 +270,14 @@ Scelte prese perché l'utente è un bambino:
 - **Fotocamera solo dove serve.** Si accende nella schermata di scansione,
   l'immagine vive il tempo di un fotogramma, non viene salvata in galleria né
   inviata. Non si leggono i dati EXIF. Il microfono non viene mai richiesto.
+  Sul web la fotocamera si spegne esplicitamente uscendo dalla schermata.
+- **Nessun contatto con siti terzi.** Non è gratis: la libreria della fotocamera
+  di Expo, nella sua versione web, crea un lettore di codici QR che scarica
+  `jsQR` da un CDN esterno **già al caricamento del modulo** — bastava importarla
+  per contattare `cdn.jsdelivr.net`, senza nemmeno aprire la fotocamera. Se ne è
+  accorto solo il collaudo in un browser vero. Sul web la fotocamera usa quindi
+  direttamente `getUserMedia` (`CameraSurface.web.tsx`) e `expo-camera` non entra
+  proprio nel pacchetto. Cinque test controllano che non ci ricaschi.
 - **Niente chat, niente pubblicità, niente acquisti** raggiungibili dal bambino.
 - **Area genitore** dietro una moltiplicazione a due cifre: ferma un bambino di
   nove anni senza infastidire un adulto. (È un cancello, non una password: dietro
@@ -376,7 +384,7 @@ provando l'app nel browser — si scopre solo dopo averla installata.
 | Cubo 3D, solver, livelli, minigiochi | ✅ | ✅ |
 | Funziona offline | ✅ | ✅ (dopo la prima apertura) |
 | Voce di Rubi | ✅ | ✅ (voci italiane di sistema) |
-| Fotocamera | ✅ | ⚠️ richiede HTTPS; da iOS 16.4 funziona anche in modalità Home |
+| Fotocamera | ✅ (`expo-camera`) | ⚠️ `getUserMedia`; richiede HTTPS, e da iOS 16.4 funziona anche in modalità Home |
 | Progressi salvati | ✅ | ⚠️ nell'archivio del browser: iOS può cancellarlo se l'app resta inutilizzata a lungo |
 | Aggiornamenti | passano dallo store | bastano un nuovo `build:web` e una ricarica |
 
@@ -405,7 +413,7 @@ npx expo run:android      # oppure run:ios
 ## Test
 
 ```bash
-npm test        # 98 test
+npm test        # 130 test
 npm run typecheck
 ```
 
@@ -421,6 +429,7 @@ scoprire a mano su un telefono.
 | `kids.test.ts` | Che in modalità facile non compaia mai la notazione; che frecce e frasi corrispondano al movimento reale; che nessun badge premi la frequenza d'uso |
 | `vision.test.ts` | Griglia, qualità (sfocato, buio, riflessi, movimento) e lettura dei 54 quadratini con luce calda, fredda e in penombra |
 | `app-logic.test.ts` | La mappa cubetti 3D → quadratini, la conversione colori↔facce con qualunque orientamento, il filtro delle risposte di Gemini |
+| `pwa.test.ts` | I meta iOS, il manifest, il service worker, e che nessun file punti a un CDN esterno |
 
 Il test di stress su 5000 cubi non è nella suite (dura circa un minuto); i
 risultati sono riportati sopra.
@@ -437,6 +446,19 @@ Per onestà, visto che questa è una prima versione completa:
   di luce, sfocatura, riflessi e cubo non centrato).
 - Che l'intera app compili (`tsc` senza errori) e che il pacchetto Android si
   costruisca (`expo export`: 924 moduli).
+- **La versione web aperta in un browser vero** (Chromium a dimensioni iPhone):
+  l'app si avvia, il cubo 3D viene disegnato con WebGL, si naviga fra home,
+  scelta modalità, inserimento colori, scuola di Rubi, minigiochi e area
+  genitore, e **staccando la rete e ricaricando l'app riparte lo stesso**.
+
+> Questo collaudo non è stato una formalità: ha trovato due difetti seri che
+> nessun test e nessuna compilazione avevano visto. Il primo era un **ciclo
+> infinito all'avvio** — la schermata iniziale chiedeva un mescolamento fisso
+> passando un generatore casuale degenere, e la funzione che sceglieva le mosse
+> riprovava all'infinito: l'app si sarebbe bloccata su schermo vuoto **su
+> qualunque piattaforma**, iPhone compreso. Il secondo era la richiesta al CDN
+> descritta nella sezione Privacy. Morale: «compila» e «i test passano» non
+> vogliono dire «parte».
 
 **Non ancora verificato**
 - **Nessuna prova su un telefono vero con un cubo vero.** È il passo successivo,

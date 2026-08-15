@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
@@ -23,7 +22,8 @@ import {
   pushFrame,
   readyForNextFace,
 } from '../../core/vision/scanner';
-import { grabFrame } from '../../services/camera';
+import CameraSurface from '../components/CameraSurface';
+import type { CameraStatus, CameraSurfaceHandle } from '../components/cameraSurface.types';
 import { colors, font, radius, space } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Scansione'>;
@@ -41,8 +41,8 @@ const FRAME_INTERVAL_MS = 420;
  * esattamente come girare il cubo per la faccia successiva.
  */
 export default function ScanScreen({ navigation }: Props) {
-  const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraView | null>(null);
+  const cameraRef = useRef<CameraSurfaceHandle | null>(null);
+  const [permesso, setPermesso] = useState<CameraStatus>('attesa');
   const scanner = useRef<ScannerState>(newScanner());
   const previousGray = useRef<Float32Array | undefined>(undefined);
   const busy = useRef(false);
@@ -72,7 +72,7 @@ export default function ScanScreen({ navigation }: Props) {
     if (busy.current || !cameraRef.current || explaining) return;
     busy.current = true;
     try {
-      const frame = await grabFrame(cameraRef.current);
+      const frame = await cameraRef.current.grabFrame();
       if (!frame || !alive.current) return;
 
       const side = Math.round(frame.width * GUIDE_FRACTION);
@@ -134,22 +134,36 @@ export default function ScanScreen({ navigation }: Props) {
   };
 
   /* --- permessi --- */
-  if (!permission) {
+  if (permesso === 'attesa') {
     return (
       <Screen title="Un attimo..." emoji="📷">
+        <CameraSurface ref={cameraRef} onStatus={setPermesso} />
         <Rubi says="Sto accendendo la fotocamera..." mood="pensieroso" />
       </Screen>
     );
   }
 
-  if (!permission.granted) {
+  if (permesso !== 'ok') {
+    const negato = permesso === 'negato';
     return (
       <Screen title="Mi serve la fotocamera" emoji="📷">
+        <CameraSurface ref={cameraRef} onStatus={setPermesso} />
         <Rubi
-          says="Per guardare il tuo cubo mi serve il permesso di usare la fotocamera. La uso solo per riconoscere i colori: le foto non vengono salvate ne mandate a nessuno."
+          says={
+            negato
+              ? 'Non riesco a usare la fotocamera. Non fa niente: possiamo scegliere i colori a mano, ci mettiamo un attimo!'
+              : 'Per guardare il tuo cubo mi serve il permesso di usare la fotocamera. La uso solo per riconoscere i colori: le foto non vengono salvate ne mandate a nessuno.'
+          }
           mood="pensieroso"
         />
-        <BigButton label="Va bene, usa la fotocamera" emoji="✅" color={colors.success} onPress={requestPermission} />
+        {!negato ? (
+          <BigButton
+            label="Va bene, usa la fotocamera"
+            emoji="✅"
+            color={colors.success}
+            onPress={async () => setPermesso(await (cameraRef.current?.richiedi() ?? 'negato'))}
+          />
+        ) : null}
         <BigButton
           label="Preferisco scegliere i colori io"
           emoji="✏️"
@@ -180,6 +194,7 @@ export default function ScanScreen({ navigation }: Props) {
           />
         }
       >
+        <CameraSurface ref={cameraRef} onStatus={setPermesso} style={styles.nascosta} />
         <Rubi
           says="Perfetto! Useremo la fotocamera per guardare il tuo cubo. Tienilo con tutte e due le mani ai lati, senza coprire i quadratini. Non preoccuparti: ti diro io quando girarlo!"
           mood="felice"
@@ -207,7 +222,7 @@ export default function ScanScreen({ navigation }: Props) {
 
   return (
     <View style={styles.full}>
-      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+      <CameraSurface ref={cameraRef} onStatus={setPermesso} />
 
       <View style={styles.overlay} pointerEvents="box-none">
         <View style={styles.topBar}>
@@ -297,6 +312,12 @@ export default function ScanScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  /** La fotocamera resta accesa ma invisibile mentre spieghiamo come tenere il cubo. */
+  nascosta: {
+    width: 1,
+    height: 1,
+    opacity: 0,
+  },
   full: {
     flex: 1,
     backgroundColor: '#000',
