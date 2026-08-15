@@ -112,6 +112,48 @@
         color: #a5b4fc;
       }
 
+      /* Pannello che compare se l'app non riesce ad avviarsi. Meglio dire cosa
+         non va che lasciare uno schermo viola muto. */
+      #guasto {
+        display: none;
+        max-width: 340px;
+        background: #ffffff;
+        color: #1e1b4b;
+        border-radius: 20px;
+        padding: 20px;
+        text-align: left;
+        margin-top: 8px;
+      }
+      #guasto h2 {
+        margin: 0 0 8px;
+        font-size: 21px;
+      }
+      #guasto p {
+        color: #4c1d95;
+        font-size: 16px;
+        line-height: 23px;
+        margin: 0 0 12px;
+      }
+      #guasto button {
+        width: 100%;
+        min-height: 58px;
+        border: 0;
+        border-radius: 16px;
+        background: #f59e0b;
+        border-bottom: 5px solid #b45309;
+        color: #fff;
+        font-size: 19px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+      #dettagli {
+        margin-top: 12px;
+        font-size: 12px;
+        color: #6d28d9;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+
       @keyframes dondola {
         0%,
         100% {
@@ -135,24 +177,92 @@
       <div id="avvio">
         <div class="cubo">🧩</div>
         <h1>Rubik Hero</h1>
-        <p>Sto preparando tutto...</p>
+        <p id="stato">Sto preparando tutto...</p>
+
+        <div id="guasto">
+          <h2>🤔 Non riesco ad avviarmi</h2>
+          <p>
+            Di solito si risolve da solo: tocca il pulsante qui sotto. Cancella
+            quello che ho scaricato e ricomincio da capo.
+          </p>
+          <button id="ripara" type="button">🔄 RIPROVA DA CAPO</button>
+          <div id="dettagli"></div>
+        </div>
       </div>
     </div>
 
     <script>
-      // Il service worker fa funzionare l'app anche senza rete: una volta
-      // aperta la prima volta, il cubo si puo' risolvere in macchina, in
-      // aereo o dove il telefono non prende.
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function () {
-          // Anche qui percorso relativo: registrandolo da /cubo/ il service
-          // worker prende come ambito /cubo/, che e' esattamente il sito.
-          navigator.serviceWorker.register('./sw.js').catch(function () {
-            // Niente service worker (per esempio se il sito non e' in HTTPS):
-            // l'app funziona lo stesso, semplicemente senza modalita' offline.
+      (function () {
+        var problemi = [];
+
+        function segnala(msg) {
+          problemi.push(String(msg).slice(0, 300));
+        }
+
+        // Raccogliamo tutto quello che va storto durante l'avvio: senza questo,
+        // un errore qualunque lascerebbe soltanto uno schermo viola muto, che
+        // e' il modo peggiore di fallire (per il bambino e per chi deve capire
+        // cosa e' successo).
+        window.addEventListener('error', function (e) {
+          if (e && e.target && e.target.src) segnala('Non arrivato: ' + e.target.src);
+          else segnala(e && e.message ? e.message : 'errore sconosciuto');
+        }, true);
+
+        window.addEventListener('unhandledrejection', function (e) {
+          segnala('Promessa fallita: ' + (e && e.reason ? e.reason : '?'));
+        });
+
+        function mostraGuasto() {
+          var avvio = document.getElementById('avvio');
+          if (!avvio) return; // l'app e' partita: niente da fare
+          var stato = document.getElementById('stato');
+          var guasto = document.getElementById('guasto');
+          if (stato) stato.textContent = 'Ci sto mettendo troppo...';
+          if (guasto) guasto.style.display = 'block';
+          var d = document.getElementById('dettagli');
+          if (d) {
+            d.textContent = (problemi.length ? problemi.join('\n') : 'Nessun errore raccolto.')
+              + '\n' + navigator.userAgent;
+          }
+        }
+
+        // Se dopo dodici secondi l'app non e' partita, spieghiamo cosa succede.
+        setTimeout(mostraGuasto, 12000);
+
+        // Il pulsante di riparazione: cancella cache e service worker e
+        // ricarica. Risolve il caso in cui il telefono si e' tenuto una
+        // versione rotta o incompleta di quello che ha scaricato.
+        document.addEventListener('click', function (e) {
+          if (!e.target || e.target.id !== 'ripara') return;
+          e.target.textContent = 'Sto pulendo...';
+          var lavori = [];
+          if (window.caches && caches.keys) {
+            lavori.push(caches.keys().then(function (n) {
+              return Promise.all(n.map(function (k) { return caches.delete(k); }));
+            }));
+          }
+          if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+            lavori.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+              return Promise.all(rs.map(function (r) { return r.unregister(); }));
+            }));
+          }
+          Promise.all(lavori).catch(function () {}).then(function () {
+            location.replace(location.pathname + '?fresco=' + Date.now());
           });
         });
-      }
+
+        // Il service worker fa funzionare l'app anche senza rete: una volta
+        // aperta la prima volta, il cubo si puo' risolvere in macchina, in
+        // aereo o dove il telefono non prende.
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function () {
+            navigator.serviceWorker.register('./sw.js').catch(function () {
+              // Niente service worker (per esempio se il sito non e' in HTTPS):
+              // l'app funziona lo stesso, senza modalita' offline.
+            });
+          });
+        }
+      })();
     </script>
   </body>
 </html>

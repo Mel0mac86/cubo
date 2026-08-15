@@ -235,3 +235,39 @@ describe('il service worker salva anche il codice dell app', () => {
     expect(manifest.start_url).toBe('./');
   });
 });
+
+describe('quando l app non riesce ad avviarsi', () => {
+  /**
+   * Uno schermo viola muto e' il modo peggiore di fallire: il bambino non
+   * capisce, il genitore non sa cosa dire, e chi deve sistemare il problema non
+   * ha nessuna informazione. E' successo davvero, aprendo il sito mentre la
+   * pubblicazione era ancora in corso: il pacchetto rispondeva "non trovato",
+   * il telefono se lo teneva in cache e l'app restava bloccata li' per sempre.
+   */
+  it('dopo dodici secondi spiega che qualcosa non va', () => {
+    expect(html).toMatch(/setTimeout\(mostraGuasto, 12000\)/);
+    expect(html).toMatch(/Non riesco ad avviarmi/);
+  });
+
+  it('offre un pulsante che cancella tutto e ricomincia', () => {
+    expect(html).toMatch(/id="ripara"/);
+    expect(html).toMatch(/caches\.delete/);
+    expect(html).toMatch(/r\.unregister\(\)/);
+    // ...e ricarica saltando la cache
+    expect(html).toMatch(/location\.replace\(location\.pathname \+ '\?fresco='/);
+  });
+
+  it('raccoglie gli errori invece di ingoiarli', () => {
+    expect(html).toMatch(/addEventListener\('error'/);
+    expect(html).toMatch(/addEventListener\('unhandledrejection'/);
+    expect(html).toMatch(/id="dettagli"/);
+  });
+
+  it('il service worker riprova saltando la cache se un file non arriva', () => {
+    expect(sw).toMatch(/fetch\(richiesta\.url, \{ cache: 'reload' \}\)/);
+  });
+
+  it('la versione della cache e cambiata, cosi il vecchio stato viene buttato', () => {
+    expect(sw).toMatch(/rubik-hero-v2/);
+  });
+});

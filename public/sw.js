@@ -16,7 +16,7 @@
  *    un aggiornamento il telefono resterebbe con la versione vecchia.
  */
 
-const VERSIONE = 'rubik-hero-v1';
+const VERSIONE = 'rubik-hero-v2';
 
 /**
  * Quello che serve per mostrare qualcosa anche partendo da zero.
@@ -139,7 +139,18 @@ self.addEventListener('fetch', (event) => {
         const cache = await caches.open(VERSIONE);
         const salvato = await cache.match(richiesta);
         if (salvato) return salvato;
-        const risposta = await fetch(richiesta);
+
+        let risposta = await fetch(richiesta);
+
+        // Se il file non arriva, riproviamo saltando la cache del browser.
+        // Serve nel caso in cui il sito sia stato aperto mentre la
+        // pubblicazione era ancora in corso: il telefono si tiene quel "non
+        // trovato" per parecchi minuti e l'app resterebbe bloccata sulla
+        // schermata di avvio anche quando il file e' ormai disponibile.
+        if (!risposta.ok) {
+          risposta = await fetch(richiesta.url, { cache: 'reload' });
+        }
+
         if (risposta.ok) cache.put(richiesta, risposta.clone());
         return risposta;
       })(),
