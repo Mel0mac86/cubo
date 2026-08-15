@@ -26,21 +26,27 @@ import {
  * Nota sulla privacy: la foto vive il tempo di un fotogramma, non finisce in
  * galleria e non viene inviata da nessuna parte. L'unica cosa che sopravvive
  * sono i 54 colori riconosciuti.
+ *
+ * Come la versione web, va montata UNA VOLTA SOLA: metterla dentro rami
+ * diversi dell'interfaccia la fa smontare e rimontare a ogni passaggio, e
+ * l'anteprima non compare mai.
  */
 const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
-  ({ onStatus, style }, ref) => {
+  ({ onStatus }, ref) => {
     const camera = useRef<CameraView | null>(null);
     const [permission, requestPermission] = useCameraPermissions();
+    const avvisa = useRef(onStatus);
+    avvisa.current = onStatus;
 
     useEffect(() => {
       if (!permission) {
-        onStatus?.('attesa');
+        avvisa.current?.('attesa');
         return;
       }
-      if (permission.granted) onStatus?.('ok');
-      else if (permission.canAskAgain) onStatus?.('da-chiedere');
-      else onStatus?.('negato');
-    }, [permission, onStatus]);
+      if (permission.granted) avvisa.current?.('ok');
+      else if (permission.canAskAgain) avvisa.current?.('da-chiedere');
+      else avvisa.current?.('negato');
+    }, [permission]);
 
     useImperativeHandle(
       ref,
@@ -74,7 +80,7 @@ const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
 
     if (!permission?.granted) return null;
 
-    return <CameraView ref={camera} style={[StyleSheet.absoluteFill, style]} facing="back" />;
+    return <CameraView ref={camera} style={StyleSheet.absoluteFill} facing="back" />;
   },
 );
 

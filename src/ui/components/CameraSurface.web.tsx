@@ -18,19 +18,30 @@ import {
  * bambini che promette di non contattare nessuno non puo' permettersi una
  * richiesta a un sito terzo (che fra l'altro fallirebbe senza rete).
  *
- * Il browser ci da' un vantaggio: possiamo copiare il fotogramma dal video
- * direttamente in una tela, senza passare da un file PNG. E' piu' veloce del
- * percorso nativo e non tocca il disco.
+ * DUE COSE DA SAPERE PRIMA DI TOCCARE QUESTO FILE
+ *
+ * 1. Questo componente va montato UNA VOLTA SOLA e lasciato dov'e'. Smontarlo
+ *    spegne il flusso video, e rimontarlo fa ripartire tutto da "devo chiedere
+ *    il permesso". Se lo si mette dentro rami diversi dell'interfaccia (una
+ *    versione nella schermata dei permessi, una in quella della spiegazione...)
+ *    React lo smonta e rimonta a ogni passaggio, e la fotocamera non si accende
+ *    mai: l'utente da' il permesso e si ritrova al punto di partenza. E'
+ *    successo davvero.
+ * 2. L'accensione DEVE partire da un tocco dell'utente: Safari su iPhone
+ *    rifiuta getUserMedia chiamato da solo al caricamento della pagina. Per
+ *    questo c'e' `richiedi()`, che la schermata chiama dal pulsante.
  */
 const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
-  ({ onStatus, style }, ref) => {
+  ({ onStatus }, ref) => {
     const video = useRef<HTMLVideoElement | null>(null);
     const canvas = useRef<HTMLCanvasElement | null>(null);
     const stream = useRef<MediaStream | null>(null);
+    const avvisa = useRef(onStatus);
+    avvisa.current = onStatus;
 
     const accendi = useCallback(async (): Promise<CameraStatus> => {
       if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-        onStatus?.('negato');
+        avvisa.current?.('negato');
         return 'negato';
       }
       try {
@@ -47,27 +58,31 @@ const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
         stream.current = s;
         if (video.current) {
           video.current.srcObject = s;
+          // play() puo' fallire se il tocco non e' considerato valido: non e'
+          // un motivo per dichiarare la fotocamera negata, il flusso c'e'.
           await video.current.play().catch(() => undefined);
         }
-        onStatus?.('ok');
+        avvisa.current?.('ok');
         return 'ok';
       } catch {
         // L'utente ha detto di no, oppure non c'e' nessuna fotocamera, oppure
         // il sito non e' in HTTPS (il browser lo vieta).
-        onStatus?.('negato');
+        avvisa.current?.('negato');
         return 'negato';
       }
-    }, [onStatus]);
+    }, []);
 
     useEffect(() => {
-      onStatus?.('da-chiedere');
+      avvisa.current?.('da-chiedere');
       return () => {
         // Spegniamo la fotocamera uscendo dalla schermata: la spia accesa
         // mentre non serve e' esattamente cio' che non vogliamo.
         stream.current?.getTracks().forEach((t) => t.stop());
         stream.current = null;
       };
-    }, [onStatus]);
+      // Nessuna dipendenza: deve succedere una volta all'ingresso e una
+      // all'uscita, mai in mezzo.
+    }, []);
 
     useImperativeHandle(
       ref,
@@ -100,7 +115,8 @@ const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
     );
 
     // react-native-web disegna con react-dom, quindi possiamo usare un vero
-    // elemento video del browser.
+    // elemento video del browser. Lo stile e' CSS puro: qui non passano gli
+    // stili di React Native, che avrebbero un formato diverso.
     return React.createElement('video', {
       ref: video,
       playsInline: true,
@@ -113,7 +129,7 @@ const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
         width: '100%',
         height: '100%',
         objectFit: 'cover',
-        ...(style as object),
+        backgroundColor: '#000',
       },
     });
   },

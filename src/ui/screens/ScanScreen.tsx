@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
@@ -27,6 +27,23 @@ import type { CameraStatus, CameraSurfaceHandle } from '../components/cameraSurf
 import { colors, font, radius, space } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Scansione'>;
+
+/**
+ * Vero se l'app e' stata aperta dall'icona sulla schermata Home invece che da
+ * Safari.
+ *
+ * Serve per un limite di iPhone che fa perdere un sacco di tempo: fino a iOS
+ * 16.3, la fotocamera NON funziona nelle app aggiunte alla Home, solo dentro
+ * Safari. Il browser non spiega niente, si limita a negare il permesso, e
+ * l'utente resta convinto di aver sbagliato qualcosa. Se siamo in quel caso,
+ * meglio dirlo.
+ */
+function apertaDallaHome(): boolean {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return false;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
+  if (nav.standalone === true) return true;
+  return window.matchMedia?.('(display-mode: standalone)')?.matches === true;
+}
 
 /** Il lato della cornice di guida, in frazione della larghezza dello schermo. */
 const GUIDE_FRACTION = 0.72;
@@ -133,25 +150,28 @@ export default function ScanScreen({ navigation }: Props) {
     }
   };
 
-  /* --- permessi --- */
-  if (permesso === 'attesa') {
-    return (
-      <Screen title="Un attimo..." emoji="📷">
-        <CameraSurface ref={cameraRef} onStatus={setPermesso} />
-        <Rubi says="Sto accendendo la fotocamera..." mood="pensieroso" />
-      </Screen>
-    );
-  }
+  /* ------------------------------------------------------------------ */
+  /* Le schermate qui sotto sono SOVRAPPOSIZIONI: la fotocamera vive sotto  */
+  /* di loro ed e' montata una volta sola (vedi il return in fondo).        */
+  /* ------------------------------------------------------------------ */
 
-  if (permesso !== 'ok') {
+  const schermataPermessi = () => {
+    if (permesso === 'attesa') {
+      return (
+        <Screen title="Un attimo..." emoji="📷">
+          <Rubi says="Sto accendendo la fotocamera..." mood="pensieroso" />
+        </Screen>
+      );
+    }
     const negato = permesso === 'negato';
     return (
       <Screen title="Mi serve la fotocamera" emoji="📷">
-        <CameraSurface ref={cameraRef} onStatus={setPermesso} />
         <Rubi
           says={
             negato
-              ? 'Non riesco a usare la fotocamera. Non fa niente: possiamo scegliere i colori a mano, ci mettiamo un attimo!'
+              ? apertaDallaHome()
+                ? 'Non riesco ad accendere la fotocamera. Prova ad aprire il sito direttamente da Safari invece che da questa icona: su certi iPhone la fotocamera funziona solo cosi. Oppure scegliamo i colori a mano, ci mettiamo un attimo!'
+                : 'Non riesco a usare la fotocamera. Non fa niente: possiamo scegliere i colori a mano, ci mettiamo un attimo!'
               : 'Per guardare il tuo cubo mi serve il permesso di usare la fotocamera. La uso solo per riconoscere i colori: le foto non vengono salvate ne mandate a nessuno.'
           }
           mood="pensieroso"
@@ -165,19 +185,19 @@ export default function ScanScreen({ navigation }: Props) {
           />
         ) : null}
         <BigButton
-          label="Preferisco scegliere i colori io"
+          label={negato ? 'Scegliamo i colori a mano!' : 'Preferisco scegliere i colori io'}
           emoji="✏️"
-          color={colors.info}
+          color={negato ? colors.success : colors.info}
+          giant={negato}
           onPress={() => navigation.replace('InserisciColori', { faceStep: 0 })}
         />
       </Screen>
     );
-  }
+  };
 
   /* --- spiegazione di come tenere il cubo --- */
-  if (explaining) {
-    return (
-      <Screen
+  const schermataSpiegazione = () => (
+    <Screen
         title="Ti spiego come tenerlo"
         emoji="👐"
         footer={
@@ -194,7 +214,6 @@ export default function ScanScreen({ navigation }: Props) {
           />
         }
       >
-        <CameraSurface ref={cameraRef} onStatus={setPermesso} style={styles.nascosta} />
         <Rubi
           says="Perfetto! Useremo la fotocamera per guardare il tuo cubo. Tienilo con tutte e due le mani ai lati, senza coprire i quadratini. Non preoccuparti: ti diro io quando girarlo!"
           mood="felice"
@@ -212,18 +231,14 @@ export default function ScanScreen({ navigation }: Props) {
           color={colors.bgSoft}
           onPress={() => navigation.replace('InserisciColori', { faceStep: 0 })}
         />
-      </Screen>
-    );
-  }
+    </Screen>
+  );
 
   /* --- scansione vera e propria --- */
   const preview = state.preview;
   const mood: RubiMood = state.phase === 'conto-alla-rovescia' ? 'sorpreso' : 'felice';
 
-  return (
-    <View style={styles.full}>
-      <CameraSurface ref={cameraRef} onStatus={setPermesso} />
-
+  const schermataScansione = () => (
       <View style={styles.overlay} pointerEvents="box-none">
         <View style={styles.topBar}>
           <Text style={styles.counter}>
@@ -307,17 +322,28 @@ export default function ScanScreen({ navigation }: Props) {
           </Text>
         </View>
       </View>
+  );
+
+  /*
+   * La fotocamera sta QUI, montata una volta sola e mai spostata: le schermate
+   * le passano sopra. Metterla dentro i singoli rami la faceva smontare e
+   * rimontare a ogni passaggio, spegnendo il flusso video e riportando lo stato
+   * a "devo chiedere il permesso": il bambino dava il permesso e si ritrovava
+   * al punto di partenza, senza mai vedere l'immagine.
+   */
+  return (
+    <View style={styles.full}>
+      <CameraSurface ref={cameraRef} onStatus={setPermesso} />
+      {permesso !== 'ok'
+        ? schermataPermessi()
+        : explaining
+          ? schermataSpiegazione()
+          : schermataScansione()}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  /** La fotocamera resta accesa ma invisibile mentre spieghiamo come tenere il cubo. */
-  nascosta: {
-    width: 1,
-    height: 1,
-    opacity: 0,
-  },
   full: {
     flex: 1,
     backgroundColor: '#000',

@@ -1,4 +1,3 @@
-import type { ViewStyle } from 'react-native';
 import type { Frame } from '../../core/vision/frame';
 
 /** Lato dell'immagine ridotta su cui gira l'analisi dei colori. */
@@ -27,5 +26,4 @@ export interface CameraSurfaceHandle {
 
 export interface CameraSurfaceProps {
   onStatus?: (s: CameraStatus) => void;
-  style?: ViewStyle;
 }
