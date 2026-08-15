@@ -72,7 +72,9 @@ export function solveKociemba(cube: CubieCube, opts: KociembaOptions = {}): Koci
 
   const t = getTables(opts.onProgress);
 
-  let bestMoves: number[] | null = null;
+  // Assegnato dentro tryPhase2: annotiamo il tipo esplicitamente perche'
+  // TypeScript non segue le assegnazioni fatte dentro le closure annidate.
+  let bestMoves: number[] | null = null as number[] | null;
   let bestPhase1 = 0;
 
   // Stato della fase 1 lungo il cammino di ricerca.

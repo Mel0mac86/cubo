@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Rubik Hero",
+    "slug": "rubik-hero",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "rubikhero",
+    "assetBundlePatterns": ["**/*"],
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#4C1D95"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rubikhero.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "La fotocamera serve solo per guardare il tuo Cubo di Rubik e riconoscere i colori. Le immagini restano sul telefono e non vengono mai salvate ne inviate.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.rubikhero.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#4C1D95"
+      },
+      "permissions": ["android.permission.CAMERA"],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.READ_CONTACTS"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La fotocamera serve solo per guardare il tuo cubo e riconoscere i colori. Le immagini restano sul telefono.",
+          "recordAudioAndroid": false
+        }
+      ]
+    ],
+    "extra": {
+      "privacy": {
+        "collectsPersonalData": false,
+        "hasAds": false,
+        "hasThirdPartyAnalytics": false,
+        "childDirected": true
+      }
+    }
+  }
+}
