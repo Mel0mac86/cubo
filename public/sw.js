@@ -18,26 +18,62 @@
 
 const VERSIONE = 'rubik-hero-v1';
 
-/** Quello che serve per mostrare qualcosa anche partendo da zero. */
+/**
+ * Quello che serve per mostrare qualcosa anche partendo da zero.
+ *
+ * Percorsi RELATIVI all'ambito del service worker: cosi funzionano sia se il
+ * sito sta alla radice del dominio, sia se sta in una sottocartella come
+ * accade su GitHub Pages (/cubo/).
+ */
+const BASE = new URL('./', self.location).pathname;
 const GUSCIO = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/apple-touch-icon.png',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-512.png',
-  '/favicon.png',
+  BASE,
+  BASE + 'index.html',
+  BASE + 'manifest.webmanifest',
+  BASE + 'apple-touch-icon.png',
+  BASE + 'icon-192.png',
+  BASE + 'icon-512.png',
+  BASE + 'icon-maskable-512.png',
+  BASE + 'favicon.png',
 ];
+
+/**
+ * Trova il pacchetto JavaScript dell'app leggendolo da index.html.
+ *
+ * Non possiamo scriverne il nome qui dentro: contiene l'impronta del contenuto
+ * e cambia a ogni pubblicazione. E non basta aspettare che lo chieda la pagina,
+ * perche' alla PRIMA visita il pacchetto viene scaricato prima che il service
+ * worker sia attivo, quindi non passerebbe mai di qui e non finirebbe in cache.
+ * Risultato: chi apriva l'app e poi restava senza rete senza aver mai
+ * ricaricato trovava una pagina vuota. Quindi ce lo andiamo a cercare da soli.
+ */
+async function trovaPacchetti() {
+  const trovati = [];
+  try {
+    const res = await fetch(BASE + 'index.html', { cache: 'no-store' });
+    const html = await res.text();
+    for (const m of html.matchAll(/<script[^>]+src="([^"]+)"/g)) {
+      trovati.push(new URL(m[1], self.location).href);
+    }
+    for (const m of html.matchAll(/<link[^>]+href="([^"]+\.css)"/g)) {
+      trovati.push(new URL(m[1], self.location).href);
+    }
+  } catch {
+    // Senza rete durante l'installazione non c'e' niente da fare: si riprovera'
+    // alla prossima apertura.
+  }
+  return trovati;
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(VERSIONE);
+      const tutto = [...GUSCIO, ...(await trovaPacchetti())];
       // addAll fallisce tutto insieme se manca un file: li aggiungiamo uno a
       // uno, cosi un'icona assente non impedisce l'installazione.
       await Promise.all(
-        GUSCIO.map((url) => cache.add(url).catch(() => undefined)),
+        tutto.map((url) => cache.add(url).catch(() => undefined)),
       );
       await self.skipWaiting();
     })(),
@@ -78,13 +114,13 @@ self.addEventListener('fetch', (event) => {
         try {
           const risposta = await fetch(richiesta);
           const cache = await caches.open(VERSIONE);
-          cache.put('/index.html', risposta.clone());
+          cache.put(BASE + 'index.html', risposta.clone());
           return risposta;
         } catch {
           const cache = await caches.open(VERSIONE);
           return (
-            (await cache.match('/index.html')) ??
-            (await cache.match('/')) ??
+            (await cache.match(BASE + 'index.html')) ??
+            (await cache.match(BASE)) ??
             new Response(
               '<h1>Rubik Hero</h1><p>Apri l app almeno una volta con la rete, poi funzionera anche senza.</p>',
               { headers: { 'Content-Type': 'text/html; charset=utf-8' } },

@@ -25,7 +25,8 @@ describe('index.html: quello che serve a iPhone', () => {
 
   it('dice a iPhone quale nome e quale icona usare sulla Home', () => {
     expect(html).toMatch(/<meta\s+name="apple-mobile-web-app-title"\s+content="Rubik Hero"/);
-    expect(html).toMatch(/<link\s+rel="apple-touch-icon"\s+href="\/apple-touch-icon\.png"/);
+    // Percorso relativo: su GitHub Pages il sito sta in una sottocartella.
+    expect(html).toMatch(/<link\s+rel="apple-touch-icon"\s+href="\.\/apple-touch-icon\.png"/);
   });
 
   it('imposta lo stile della barra di stato e il colore del tema', () => {
@@ -45,11 +46,11 @@ describe('index.html: quello che serve a iPhone', () => {
   });
 
   it('collega il manifest', () => {
-    expect(html).toMatch(/<link\s+rel="manifest"\s+href="\/manifest\.webmanifest"/);
+    expect(html).toMatch(/<link\s+rel="manifest"\s+href="\.\/manifest\.webmanifest"/);
   });
 
   it('registra il service worker', () => {
-    expect(html).toMatch(/navigator\.serviceWorker\.register\('\/sw\.js'\)/);
+    expect(html).toMatch(/navigator\.serviceWorker\.register\('\.\/sw\.js'\)/);
     // E non deve esplodere se il service worker non e' disponibile (HTTP semplice).
     expect(html).toMatch(/\.catch\(/);
   });
@@ -71,8 +72,9 @@ describe('manifest', () => {
   it('si apre a schermo intero, in verticale', () => {
     expect(manifest.display).toBe('standalone');
     expect(manifest.orientation).toBe('portrait');
-    expect(manifest.start_url).toBe('/');
-    expect(manifest.scope).toBe('/');
+    // "./" e non "/": il sito deve funzionare anche dentro una sottocartella.
+    expect(manifest.start_url).toBe('./');
+    expect(manifest.scope).toBe('./');
   });
 
   it('e in italiano e ha nome e descrizione', () => {
@@ -105,8 +107,8 @@ describe('manifest', () => {
 
 describe('service worker', () => {
   it('mette in cache il guscio dell app', () => {
-    expect(sw).toMatch(/'\/index\.html'/);
-    expect(sw).toMatch(/'\/manifest\.webmanifest'/);
+    expect(sw).toMatch(/BASE \+ 'index\.html'/);
+    expect(sw).toMatch(/BASE \+ 'manifest\.webmanifest'/);
     expect(sw).toMatch(/apple-touch-icon\.png/);
   });
 
@@ -204,5 +206,32 @@ describe('niente contatti con siti terzi', () => {
   it('la fotocamera web si spegne quando si esce dalla schermata', () => {
     const web = readFileSync(join(root, 'src/ui/components/CameraSurface.web.tsx'), 'utf8');
     expect(web).toMatch(/getTracks\(\)\.forEach\(\(t\) => t\.stop\(\)\)/);
+  });
+});
+
+describe('il service worker salva anche il codice dell app', () => {
+  /**
+   * Difetto trovato collaudando il sito servito da una sottocartella: l'app si
+   * apriva, ma staccando la rete e ricaricando restava una pagina vuota.
+   *
+   * Il motivo: il pacchetto JavaScript ha l'impronta del contenuto nel nome,
+   * quindi non si puo' elencare a mano nel guscio; e alla PRIMA visita viene
+   * scaricato prima che il service worker sia attivo, quindi non passa dal suo
+   * filtro e non finisce in cache. Ora il service worker se lo va a cercare da
+   * solo dentro index.html mentre si installa.
+   */
+  it('cerca il pacchetto dentro index.html durante l installazione', () => {
+    expect(sw).toMatch(/async function trovaPacchetti/);
+    expect(sw).toMatch(/<script\[\^>\]\+src=/);
+    expect(sw).toMatch(/\[\.\.\.GUSCIO, \.\.\.\(await trovaPacchetti\(\)\)\]/);
+  });
+
+  it('usa percorsi relativi, cosi funziona anche in una sottocartella', () => {
+    // Su GitHub Pages il sito sta sotto /nome-repo/: con i percorsi assoluti
+    // il service worker cercherebbe i file fuori dal sito.
+    expect(sw).toMatch(/const BASE = new URL\('\.\/', self\.location\)\.pathname/);
+    expect(sw).not.toMatch(/'\/index\.html'/);
+    expect(html).toMatch(/register\('\.\/sw\.js'\)/);
+    expect(manifest.start_url).toBe('./');
   });
 });

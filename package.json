@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "icons": "node scripts/make-icons.mjs",
-    "build:web": "expo export --platform web --output-dir dist"
+    "build:web": "expo export --platform web --output-dir dist",
+    "build:pages": "node scripts/build-pages.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",

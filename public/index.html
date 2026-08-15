@@ -34,11 +34,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Rubik Hero" />
 
+    <!--
+      Percorsi RELATIVI, non assoluti: GitHub Pages serve i siti di progetto
+      dentro una sottocartella (/cubo/), quindi "/icon-192.png" punterebbe
+      fuori dal sito e l'icona non si vedrebbe.
+    -->
     <!-- L'icona che finisce sulla schermata Home dell'iPhone -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
 
     <style>
       html,
@@ -140,7 +145,9 @@
       // aereo o dove il telefono non prende.
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/sw.js').catch(function () {
+          // Anche qui percorso relativo: registrandolo da /cubo/ il service
+          // worker prende come ambito /cubo/, che e' esattamente il sito.
+          navigator.serviceWorker.register('./sw.js').catch(function () {
             // Niente service worker (per esempio se il sito non e' in HTTPS):
             // l'app funziona lo stesso, semplicemente senza modalita' offline.
           });
