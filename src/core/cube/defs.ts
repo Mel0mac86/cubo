@@ -173,6 +173,16 @@ export const COLOR_LABEL_IT: Record<CubeColor, string> = {
   [CubeColor.Blue]: 'blu',
 };
 
+/** Gli stessi nomi al plurale: "tre quadratini VERDI", non "verde". */
+export const COLOR_LABEL_IT_PLURAL: Record<CubeColor, string> = {
+  [CubeColor.White]: 'bianchi',
+  [CubeColor.Red]: 'rossi',
+  [CubeColor.Green]: 'verdi',
+  [CubeColor.Yellow]: 'gialli',
+  [CubeColor.Orange]: 'arancioni',
+  [CubeColor.Blue]: 'blu',
+};
+
 export const COLOR_EMOJI: Record<CubeColor, string> = {
   [CubeColor.White]: '⚪',
   [CubeColor.Red]: '🔴',

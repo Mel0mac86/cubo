@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
 import ColorPalette from '../components/ColorPalette';
+import ColorTally from '../components/ColorTally';
 import FaceGrid from '../components/FaceGrid';
 import Rubi, { RubiMood } from '../components/Rubi';
 import Screen from '../components/Screen';
@@ -11,7 +12,17 @@ import { RootStackParamList } from '../navigation';
 import { useSession } from '../state/cubeSession';
 import { useStore } from '../state/store';
 import { useVoice } from '../state/voice';
-import { COLOR_LABEL_IT, CubeColor, Face } from '../../core/cube/defs';
+import { COLOR_LABEL_IT, COLOR_LABEL_IT_PLURAL, CubeColor, Face } from '../../core/cube/defs';
+import {
+  StatoInserimento,
+  avvisoTroppiColori,
+  colora,
+  conFaccia,
+  contaColori,
+  nuovoStato,
+  quantiFatti,
+  tocca,
+} from '../../core/kids/entry';
 import { faceProgressMessage, praise, progressBar, stars } from '../../core/kids/instructions';
 import { colors, font, space } from '../theme';
 
@@ -43,51 +54,54 @@ export default function ColorInputScreen({ navigation, route }: Props) {
   const { updateProgress } = useStore();
   const { speak, repeat } = useVoice();
 
-  const [cells, setCells] = useState<(CubeColor | null)[]>(() =>
-    Array.from({ length: 9 }, (_, i) => session.colors[face * 9 + i]),
+  const [stato, setStato] = useState<StatoInserimento>(() =>
+    nuovoStato(Array.from({ length: 9 }, (_, i) => session.colors[face * 9 + i])),
   );
-  const [pickedColor, setPickedColor] = useState<CubeColor | null>(null);
-  const [selected, setSelected] = useState<number | null>(4);
+  const { cells, selected, pennello } = stato;
   const [mood, setMood] = useState<RubiMood>('felice');
 
   const centerDone = cells[4] !== null;
-  const filled = cells.filter((c) => c !== null).length;
+  const filled = quantiFatti(cells);
   const allDone = filled === 9;
 
+  /* Il conto dei colori di TUTTO il cubo, con questa faccia gia' aggiornata:
+   * e' quello che permette di accorgersi del colore di troppo adesso, e non
+   * alla fine quando non si sa piu' dove guardare. */
+  const tuttoIlCubo = useMemo(
+    () => conFaccia(session.colors, face, cells),
+    [session.colors, face, cells],
+  );
+  const troppi = useMemo(() => contaColori(tuttoIlCubo).filter((c) => c.troppi), [tuttoIlCubo]);
+
   const says = useMemo(() => {
+    if (troppi.length > 0) return avvisoTroppiColori(troppi[0].color, troppi[0].messi);
     if (!centerDone) return `${turn}\nGuarda il quadratino al centro: che colore e?`;
     if (!allDone) {
       const label = COLOR_LABEL_IT[cells[4]!];
-      return `Perfetto! Questa sara la faccia ${label}. Adesso tocca gli altri quadratini e scegli il loro colore.`;
+      return `Perfetto! Questa sara la faccia ${label}. Adesso tocca un quadratino e poi scegli il suo colore.`;
     }
     return `${praise(step)} Faccia completata!`;
-  }, [centerDone, allDone, cells, turn, step]);
+  }, [troppi, centerDone, allDone, cells, turn, step]);
 
   useEffect(() => {
     speak(says);
   }, [says, speak]);
 
-  const pick = (color: CubeColor) => {
-    setPickedColor(color);
-    if (selected === null) return;
-    const next = [...cells];
-    next[selected] = color;
-    setCells(next);
-    setMood('felice');
-    // Passa da solo al primo quadratino ancora vuoto: cosi si puo' colorare
-    // tutta la faccia senza mai dover mirare due volte.
-    const nextEmpty = next.findIndex((c, i) => c === null && i !== 4);
-    setSelected(nextEmpty === -1 ? null : nextEmpty);
-  };
+  useEffect(() => {
+    setMood(troppi.length > 0 ? 'pensieroso' : 'felice');
+  }, [troppi.length]);
 
-  const tapCell = (i: number) => {
-    setSelected(i);
-    if (pickedColor !== null) {
-      const next = [...cells];
-      next[i] = pickedColor;
-      setCells(next);
-    }
-  };
+  /** La tavolozza colora il quadratino scelto. */
+  const pick = (color: CubeColor) => setStato((s) => colora(s, color));
+
+  /**
+   * Il tocco SCEGLIE e basta, non colora mai.
+   * Prima ricolorava con l'ultimo colore usato: bastava sfiorare un quadratino
+   * gia' giusto (o il centro, che tutti toccano perche' ha il pallino) e il
+   * colore cambiava in silenzio. Era proprio quello a far comparire alla fine
+   * "abbiamo messo un colore di troppo" su cubi inseriti bene.
+   */
+  const tapCell = (i: number) => setStato((s) => tocca(s, i));
 
   const confirm = () => {
     session.setFaceColors(face, cells);
@@ -101,17 +115,49 @@ export default function ColorInputScreen({ navigation, route }: Props) {
     }
   };
 
+  /* I quadratini di QUESTA faccia che hanno un colore gia' finito altrove:
+   * sono quelli su cui vale la pena tornare, e si possono correggere qui. */
+  const sospetti = cells
+    .map((c, i) => (c !== null && troppi.some((t) => t.color === c) ? i : -1))
+    .filter((i) => i >= 0);
+
+  const daSistemareQui = sospetti.length > 0;
+
   return (
     <Screen
       title={step === 0 ? 'FACCIAMO LA PRIMA! ⭐' : `FACCIA ${step + 1} DI 6`}
       footer={
-        <BigButton
-          label={allDone ? (step === 5 ? 'CONTROLLIAMO!' : 'AVANTI!') : `Mancano ${9 - filled} quadratini`}
-          emoji={allDone ? '✅' : '👆'}
-          color={allDone ? colors.success : colors.muted}
-          disabled={!allDone}
-          onPress={confirm}
-        />
+        <View style={{ gap: space.xs }}>
+          <BigButton
+            label={
+              !allDone
+                ? `Mancano ${9 - filled} quadratini`
+                : daSistemareQui
+                  ? `Guarda i quadratini ${COLOR_LABEL_IT_PLURAL[troppi[0].color]}`
+                  : step === 5
+                    ? 'CONTROLLIAMO!'
+                    : 'AVANTI!'
+            }
+            emoji={!allDone ? '👆' : daSistemareQui ? '🔎' : '✅'}
+            color={!allDone || daSistemareQui ? colors.muted : colors.success}
+            disabled={!allDone || daSistemareQui}
+            onPress={confirm}
+          />
+          {/* La via d'uscita: il quadratino di troppo puo' benissimo stare su
+           * una faccia di prima, e questa faccia essere giustissima. Senza
+           * questo pulsante il bambino resterebbe bloccato qui. */}
+          {daSistemareQui ? (
+            <BigButton
+              label="Era giusta! Guardiamo le facce di prima"
+              emoji="↩️"
+              color={colors.info}
+              onPress={() => {
+                session.setFaceColors(face, cells);
+                navigation.navigate('Correggi', { face });
+              }}
+            />
+          ) : null}
+        </View>
       }
     >
       <Text style={styles.progress}>
@@ -124,6 +170,7 @@ export default function ColorInputScreen({ navigation, route }: Props) {
         <FaceGrid
           cells={cells}
           selected={selected}
+          suspects={sospetti}
           onCellPress={tapCell}
           caption={
             centerDone
@@ -133,7 +180,11 @@ export default function ColorInputScreen({ navigation, route }: Props) {
         />
       </View>
 
-      <ColorPalette onPick={pick} selected={pickedColor} />
+      <ColorPalette onPick={pick} selected={pennello} />
+
+      <View style={styles.tallyWrap}>
+        <ColorTally cells={tuttoIlCubo} />
+      </View>
 
       {step > 0 ? (
         <Text style={styles.hint}>{faceProgressMessage(step)}</Text>
@@ -152,6 +203,9 @@ const styles = StyleSheet.create({
   gridWrap: {
     alignItems: 'center',
     marginVertical: space.md,
+  },
+  tallyWrap: {
+    marginTop: space.md,
   },
   hint: {
     textAlign: 'center',

@@ -6,6 +6,7 @@ import BigButton from '../components/BigButton';
 import Rubi from '../components/Rubi';
 import Screen, { Card } from '../components/Screen';
 import { RootStackParamList } from '../navigation';
+import { useSession } from '../state/cubeSession';
 import { useVoice } from '../state/voice';
 import { colors, font, space } from '../theme';
 
@@ -21,6 +22,21 @@ const SAYS =
  */
 export default function ChooseInputScreen({ navigation }: Props) {
   const { speak, repeat } = useVoice();
+  const session = useSession();
+
+  /**
+   * Si riparte sempre da zero.
+   * Senza questo, i colori di un tentativo precedente (per esempio una
+   * scansione andata storta) restavano in memoria: le facce si aprivano gia'
+   * colorate, il pulsante AVANTI era subito acceso e il bambino le sfogliava
+   * senza guardarle. Alla fine il conto dei colori non tornava e sembrava
+   * colpa sua.
+   */
+  const inizia = (dove: 'Scansione' | 'InserisciColori') => {
+    session.clear();
+    if (dove === 'Scansione') navigation.navigate('Scansione');
+    else navigation.navigate('InserisciColori', { faceStep: 0 });
+  };
 
   React.useEffect(() => {
     speak(SAYS);
@@ -36,7 +52,7 @@ export default function ChooseInputScreen({ navigation }: Props) {
         sub="Uso la fotocamera e faccio tutto io"
         color={colors.success}
         giant
-        onPress={() => navigation.navigate('Scansione')}
+        onPress={() => inizia('Scansione')}
       />
 
       <BigButton
@@ -44,7 +60,7 @@ export default function ChooseInputScreen({ navigation }: Props) {
         emoji="✏️"
         sub="Tocco i quadratini uno a uno"
         color={colors.info}
-        onPress={() => navigation.navigate('InserisciColori', { faceStep: 0 })}
+        onPress={() => inizia('InserisciColori')}
       />
 
       <Card style={styles.tip}>

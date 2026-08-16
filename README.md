@@ -340,6 +340,49 @@ deve sembrare una sconfitta.
 
 ---
 
+## L'inserimento dei colori a mano
+
+La strada manuale è la rete di sicurezza di tutta l'app: se la fotocamera non
+funziona si passa di qui, quindi deve essere impossibile sbagliare senza
+accorgersene.
+
+**Il difetto che c'era.** Un tocco su un quadratino non lo *selezionava*
+soltanto: lo **ricolorava** con l'ultimo colore usato sulla tavolozza. Bastava
+sfiorare un quadratino già giusto — o il centro, che tutti toccano perché è
+quello col pallino — e il colore cambiava in silenzio. Cinquantaquattro tocchi
+dopo, la schermata di controllo diceva «un colore compare troppe volte» su un
+cubo che era stato letto benissimo. Lo stesso valeva sulla schermata di
+correzione, dove la didascalia diceva già *«tocca il quadratino da cambiare»*
+mentre il codice ne cambiava uno a ogni tocco.
+
+Due leaks completavano il quadro: si poteva entrare nell'inserimento manuale
+con i colori di una scansione precedente ancora in memoria (facce già piene e
+pulsante AVANTI subito acceso: si sfogliavano sei schermate senza guardarle), e
+il suggerimento «forse questo dovrebbe essere *arancione*» leggeva una **faccia**
+del motore come se fosse un colore, sbagliando nome ogni volta che il cubo non
+era tenuto nell'orientamento classico.
+
+**Come funziona adesso.** Le regole stanno in `src/core/kids/entry.ts`, fuori
+dalle schermate, così si possono provare simulando le sequenze di tocchi:
+
+- **Toccare non colora mai.** Il tocco sceglie il quadratino, il colore lo mette
+  la tavolozza. Un tocco per sbaglio non può più rovinare niente.
+- **Il conto si vede sempre.** Sei gettoni sotto la griglia dicono `⚪ 5/9`,
+  aggiornati a ogni tocco. Quando un colore arriva a dieci il gettone diventa
+  rosso, Rubi lo dice ad alta voce e i quadratini di quel colore su questa
+  faccia si accendono col bordo rosso — mentre il cubo è ancora in mano.
+- **Non si resta mai bloccati.** Se il quadratino di troppo sta su una faccia
+  precedente, un secondo pulsante porta a rivedere tutte le facce e poi si torna
+  a colorare.
+- **Si riparte sempre da zero** quando si comincia un cubo nuovo.
+
+Verificato in due modi: test sulle regole pure (`tests/entry.test.ts`, fra cui
+l'inserimento delle sei facce fino al validatore) e due prove nel browser vero
+con Playwright — le sei facce inserite a clic vengono accettate da tutti gli 8
+controlli, e un decimo verde fa comparire l'avviso all'istante.
+
+---
+
 ## Il linguaggio per bambini
 
 Ogni mossa viene tradotta in quello che il bambino **vede**, con la freccia

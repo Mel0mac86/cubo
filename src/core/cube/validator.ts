@@ -147,6 +147,7 @@ export function validateFacelets(f: (Face | null)[]): ValidationReport {
   }
   add(pass('stickers'));
   const g = f as Face[];
+  const impossibili = faceletImpossibili(g);
 
   /* CONTROLLO 2 — 9 sticker per colore */
   const counts = new Array(6).fill(0);
@@ -155,13 +156,20 @@ export function validateFacelets(f: (Face | null)[]): ValidationReport {
   if (wrongCounts.length > 0) {
     const tooMany = FACE_ORDER.filter((c) => counts[c] > 9);
     const tooFew = FACE_ORDER.filter((c) => counts[c] < 9);
-    const sus: number[] = [];
-    for (let i = 0; i < 54; i++) if (tooMany.includes(g[i])) sus.push(i);
-    const suggestion = tooFew.length === 1 ? sus.map((i) => ({ facelet: i, shouldBe: tooFew[0] })) : undefined;
+    const tutti: number[] = [];
+    for (let i = 0; i < 54; i++) if (tooMany.includes(g[i])) tutti.push(i);
+    // Fra tutti i quadratini del colore in eccesso, quelli che stanno su un
+    // pezzo impossibile sono gli unici di cui siamo CERTI che qualcosa non va:
+    // se ci sono, indichiamo solo quelli invece di accendere dodici quadratini
+    // a caso e mandare il bambino a cercare a caso.
+    const certi = tutti.filter((i) => impossibili.has(i));
+    const sus = certi.length > 0 ? certi : tutti;
+    const suggestion =
+      tooFew.length === 1 ? sus.map((i) => ({ facelet: i, shouldBe: tooFew[0] })) : undefined;
     add(
       fail(
         'counts',
-        'Un colore compare troppe volte e un altro troppo poche. Ne abbiamo colorato uno di troppo!',
+        'Su un cubo vero ogni colore compare esattamente 9 volte: qui uno ce n e di piu e un altro di meno. Ricontiamoli insieme!',
         sus,
         suggestion,
       ),
@@ -296,6 +304,35 @@ export function validate(f: FaceletState): ValidationReport {
 /* ------------------------------------------------------------------ */
 /* Utilita'                                                            */
 /* ------------------------------------------------------------------ */
+
+/**
+ * I quadratini che stanno su un pezzo che su un cubo vero non puo' esistere:
+ * un angolo o uno spigolo con due colori uguali, oppure con due colori che
+ * sono l'uno l'opposto dell'altro (bianco e giallo non si toccano mai).
+ *
+ * E' una prova, non un sospetto: se un colore compare dieci volte, quello di
+ * troppo e' quasi sempre uno di questi. Serve per non evidenziare al bambino
+ * tutti e dieci i quadratini di quel colore, che non lo aiuterebbe per niente.
+ */
+function faceletImpossibili(g: Face[]): Set<number> {
+  const out = new Set<number>();
+  const guarda = (facelets: readonly number[]) => {
+    const c = facelets.map((i) => g[i]);
+    let rotto = false;
+    for (let i = 0; i < c.length && !rotto; i++) {
+      for (let j = i + 1; j < c.length; j++) {
+        if (c[i] === c[j] || OPPOSITE_FACE[c[i]] === c[j]) {
+          rotto = true;
+          break;
+        }
+      }
+    }
+    if (rotto) facelets.forEach((i) => out.add(i));
+  };
+  CORNER_FACELET.forEach(guarda);
+  EDGE_FACELET.forEach(guarda);
+  return out;
+}
 
 function duplicates(arr: number[]): number[] {
   const seen = new Map<number, number>();

@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import BigButton from '../components/BigButton';
+import ColorTally from '../components/ColorTally';
 import CubeView from '../components/CubeView';
 import FaceGrid from '../components/FaceGrid';
 import Rubi, { RubiMood } from '../components/Rubi';
@@ -185,6 +186,16 @@ export default function CheckScreen({ navigation }: Props) {
           .map((s) => s % 9);
 
   const suggestion = report.checks.find((c) => c.suggestion?.length)?.suggestion?.[0];
+  /* `shouldBe` e' una FACCIA del motore, non un colore: va tradotto passando
+   * dai centri che il bambino ha inserito. Prima veniva letto direttamente
+   * come colore e usciva il nome sbagliato ogni volta che il cubo non era
+   * tenuto nell'orientamento classico. */
+  const suggestedColor: CubeColor | null =
+    suggestion && session.colorOfFace ? session.colorOfFace[suggestion.shouldBe] : null;
+
+  /* Quando a non tornare e' il CONTO dei colori non c'e' un quadratino
+   * colpevole: serve far vedere i sei conti e lasciar ricontare. */
+  const countsFailed = report.checks.some((c) => c.id === 'counts' && !c.ok && c.message);
 
   return (
     <Screen
@@ -226,11 +237,23 @@ export default function CheckScreen({ navigation }: Props) {
         />
       </View>
 
-      {suggestion ? (
+      {countsFailed ? (
+        <Card>
+          <Text style={styles.suggestion}>
+            🔢 Ecco quanti quadratini ho contato per ogni colore. Su un cubo vero devono essere{' '}
+            <Text style={styles.bold}>9 per ognuno</Text>.
+          </Text>
+          <View style={styles.tallyWrap}>
+            <ColorTally cells={session.colors} />
+          </View>
+        </Card>
+      ) : null}
+
+      {suggestedColor !== null ? (
         <Card>
           <Text style={styles.suggestion}>
             💡 Forse questo quadratino dovrebbe essere{' '}
-            <Text style={styles.bold}>{COLOR_LABEL_IT[suggestion.shouldBe as unknown as CubeColor]}</Text>.
+            <Text style={styles.bold}>{COLOR_LABEL_IT[suggestedColor]}</Text>.
           </Text>
         </Card>
       ) : null}
@@ -275,6 +298,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: font.body,
     lineHeight: 26,
+  },
+  tallyWrap: {
+    marginTop: space.sm,
+    backgroundColor: '#1E1B4B',
+    borderRadius: 12,
+    paddingVertical: space.sm,
   },
   bold: {
     fontWeight: '900',

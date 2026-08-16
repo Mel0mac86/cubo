@@ -91,6 +91,20 @@ export default function ScanScreen({ navigation }: Props) {
     };
   }, []);
 
+  /**
+   * Si passa a scegliere i colori a mano.
+   *
+   * Si azzera prima tutto: se una scansione precedente aveva gia' scritto dei
+   * colori, l'inserimento a mano si apriva con le facce gia' riempite e il
+   * pulsante AVANTI subito acceso. Bastava toccarlo sei volte per arrivare al
+   * controllo con i colori della fotocamera, mai guardati da nessuno — ed era
+   * li' che spuntava "abbiamo messo un colore di troppo" su un cubo giusto.
+   */
+  const passaAMano = () => {
+    session.clear();
+    navigation.replace('InserisciColori', { faceStep: 0 });
+  };
+
   /** Un giro del ciclo: prendi un fotogramma, analizzalo, aggiorna lo stato. */
   const step = useCallback(async () => {
     if (busy.current || !cameraRef.current || explaining) return;
@@ -199,7 +213,7 @@ export default function ScanScreen({ navigation }: Props) {
           emoji="✏️"
           color={negato ? colors.success : colors.info}
           giant={negato}
-          onPress={() => navigation.replace('InserisciColori', { faceStep: 0 })}
+          onPress={() => passaAMano()}
         />
       </Screen>
     );
@@ -239,7 +253,7 @@ export default function ScanScreen({ navigation }: Props) {
           label="Preferisco scegliere i colori io"
           emoji="✏️"
           color={colors.bgSoft}
-          onPress={() => navigation.replace('InserisciColori', { faceStep: 0 })}
+          onPress={() => passaAMano()}
         />
     </Screen>
   );
@@ -320,13 +334,13 @@ export default function ScanScreen({ navigation }: Props) {
               label="Sistemo io i colori"
               emoji="✏️"
               color={colors.primary}
-              onPress={() => navigation.replace('InserisciColori', { faceStep: 0 })}
+              onPress={() => passaAMano()}
             />
           ) : null}
 
           <Text
             style={styles.escape}
-            onPress={() => navigation.replace('InserisciColori', { faceStep: 0 })}
+            onPress={() => passaAMano()}
           >
             ✏️ Non funziona? Scegli tu i colori
           </Text>
