@@ -36,19 +36,64 @@ type Props = NativeStackScreenProps<RootStackParamList, 'InserisciColori'>;
  * delle facce), poi si riempiono gli altri otto quadratini.
  */
 
-/** L'ordine in cui chiediamo le facce, con l'istruzione fisica per girare il cubo. */
-const STEPS: { face: Face; turn: string }[] = [
-  { face: Face.F, turn: 'Tieni il cubo davanti a te e guarda la faccia che ti sta di fronte.' },
-  { face: Face.R, turn: 'Adesso gira il cubo verso sinistra e guarda la faccia nuova. 👈' },
-  { face: Face.B, turn: 'Gira ancora verso sinistra. 👈' },
-  { face: Face.L, turn: 'Un altro giro verso sinistra. 👈' },
-  { face: Face.U, turn: 'Torna come all inizio e guarda la faccia di sopra. 👆' },
-  { face: Face.D, turn: 'Ultima! Guarda la faccia di sotto. 👇' },
+/**
+ * L'ordine in cui chiediamo le facce, con l'istruzione fisica per girare il cubo.
+ *
+ * `ancora` e' il colore del centro della PRIMA faccia: e' il punto di
+ * riferimento del bambino per tutto il resto dell'inserimento.
+ *
+ * Perche' tanta precisione: i sei centri dicono di che faccia si tratta, ma non
+ * dicono come il bambino teneva il cubo mentre la guardava. Le facce di sopra e
+ * di sotto si possono guardare in quattro modi diversi, tutti naturali, e tre
+ * su quattro mettono i nove quadratini nelle caselle sbagliate. I colori
+ * risultano contati bene, i centri pure, e l'app finisce per dire "gli
+ * angolini non sono giusti" a un bambino che ha copiato tutto correttamente.
+ *
+ * Per questo ogni passo dice DOVE deve finire la faccia di riferimento, e la
+ * `regola` sotto la griglia da' un controllo che vale comunque si giri il cubo.
+ */
+const STEPS: {
+  face: Face;
+  turn: (ancora: string) => string;
+  regola?: (ancora: string) => string;
+}[] = [
+  {
+    face: Face.F,
+    turn: () => 'Tieni il cubo davanti a te con tutte e due le mani e guarda la faccia che ti sta di fronte.',
+  },
+  {
+    face: Face.R,
+    turn: (a) =>
+      `Gira il cubo verso sinistra, come si gira una maniglia: la faccia ${a} va a finire a sinistra e ne arriva una nuova davanti. La faccia di sopra deve restare sopra! 👈`,
+    regola: () => '☝️ La faccia di sopra deve essere rimasta sopra',
+  },
+  {
+    face: Face.B,
+    turn: () => 'Gira ancora nello stesso verso, sempre verso sinistra. 👈',
+    regola: () => '☝️ La faccia di sopra deve essere rimasta sopra',
+  },
+  {
+    face: Face.L,
+    turn: () => 'Un altro giro nello stesso verso: e l ultima faccia di lato. 👈',
+    regola: () => '☝️ La faccia di sopra deve essere rimasta sopra',
+  },
+  {
+    face: Face.U,
+    turn: (a) =>
+      `Rimetti la faccia ${a} davanti a te. Adesso inclina il cubo VERSO DI TE, come se cadesse in avanti, finche vedi la faccia di sopra: la faccia ${a} deve finire in basso, vicino a te. 👆`,
+    regola: (a) => `👇 La fila che tocca la faccia ${a} va IN BASSO`,
+  },
+  {
+    face: Face.D,
+    turn: (a) =>
+      `Ultima! Rimetti la faccia ${a} davanti e inclina il cubo DALLA PARTE OPPOSTA, lontano da te, finche vedi la faccia di sotto: la faccia ${a} deve finire in alto. 👇`,
+    regola: (a) => `👆 La fila che tocca la faccia ${a} va IN ALTO`,
+  },
 ];
 
 export default function ColorInputScreen({ navigation, route }: Props) {
   const step = route.params?.faceStep ?? 0;
-  const { face, turn } = STEPS[step];
+  const { face, turn, regola } = STEPS[step];
 
   const session = useSession();
   const { updateProgress } = useStore();
@@ -73,15 +118,21 @@ export default function ColorInputScreen({ navigation, route }: Props) {
   );
   const troppi = useMemo(() => contaColori(tuttoIlCubo).filter((c) => c.troppi), [tuttoIlCubo]);
 
+  /* Il colore di riferimento: il centro della PRIMA faccia inserita. E' con
+   * quello che diciamo al bambino come tenere il cubo, invece di usare parole
+   * come "davanti" e "dietro" che dipendono da come lo sta girando. */
+  const ancoraColore = session.colors[Face.F * 9 + 4];
+  const ancora = ancoraColore !== null ? COLOR_LABEL_IT[ancoraColore] : 'della prima faccia';
+
   const says = useMemo(() => {
     if (troppi.length > 0) return avvisoTroppiColori(troppi[0].color, troppi[0].messi);
-    if (!centerDone) return `${turn}\nGuarda il quadratino al centro: che colore e?`;
+    if (!centerDone) return `${turn(ancora)}\nGuarda il quadratino al centro: che colore e?`;
     if (!allDone) {
       const label = COLOR_LABEL_IT[cells[4]!];
       return `Perfetto! Questa sara la faccia ${label}. Adesso tocca un quadratino e poi scegli il suo colore.`;
     }
     return `${praise(step)} Faccia completata!`;
-  }, [troppi, centerDone, allDone, cells, turn, step]);
+  }, [troppi, centerDone, allDone, cells, turn, ancora, step]);
 
   useEffect(() => {
     speak(says);
@@ -178,6 +229,10 @@ export default function ColorInputScreen({ navigation, route }: Props) {
               : 'Il quadratino con il pallino e quello centrale'
           }
         />
+        {/* La regola che non dipende da come il cubo e' stato girato: da' al
+         * bambino un modo per accorgersi da solo di aver guardato la faccia
+         * dalla parte sbagliata. */}
+        {regola ? <Text style={styles.regola}>{regola(ancora)}</Text> : null}
       </View>
 
       <ColorPalette onPick={pick} selected={pennello} />
@@ -206,6 +261,13 @@ const styles = StyleSheet.create({
   },
   tallyWrap: {
     marginTop: space.md,
+  },
+  regola: {
+    marginTop: space.sm,
+    textAlign: 'center',
+    color: colors.textOnDark,
+    fontSize: font.small,
+    fontWeight: '900',
   },
   hint: {
     textAlign: 'center',

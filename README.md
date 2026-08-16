@@ -381,6 +381,50 @@ l'inserimento delle sei facce fino al validatore) e due prove nel browser vero
 con Playwright — le sei facce inserite a clic vengono accettate da tutti gli 8
 controlli, e un decimo verde fa comparire l'avviso all'istante.
 
+### «Gli angolini non sono giusti» su un cubo copiato bene
+
+Un secondo problema, più subdolo del primo perché **non c'è niente da
+correggere nei colori**. I sei centri dicono senza ambiguità *di che faccia* si
+tratta, ma non dicono **come il bambino teneva il cubo mentre la guardava**. La
+faccia di sotto si può guardare in quattro modi tutti naturali, e tre su quattro
+mettono i nove quadratini nelle caselle sbagliate.
+
+L'effetto è inconfondibile e corrispondeva esattamente alla segnalazione:
+i colori sono contati bene (girare una faccia non cambia quanti quadratini ci
+sono), i centri sono giusti (il centro resta al centro), ma gli angolini
+risultano impossibili. Le vecchie istruzioni — *«Ultima! Guarda la faccia di
+sotto 👇»* — non dicevano in che verso girare il cubo, e nemmeno *«gira verso
+sinistra»* diceva davvero quale faccia dovesse finire dove.
+
+Due rimedi, uno che previene e uno che salva:
+
+**Le istruzioni adesso ancorano tutto al colore della prima faccia.** Non
+«guarda la faccia di sotto», ma *«rimetti la faccia verde davanti e inclina il
+cubo lontano da te finché vedi la faccia di sotto: la faccia verde deve finire
+in alto»*. E sotto la griglia c'è una regola che vale comunque si giri il cubo:
+*«👆 La fila che tocca la faccia verde va IN ALTO»*.
+
+**Se succede lo stesso, l'app se ne accorge da sola** (`src/core/cube/orientation.ts`).
+Quando i colori e i centri tornano ma i pezzi no, prova tutti i modi in cui il
+bambino poteva tenere il cubo — le 4 rotazioni di ciascuna faccia, più il caso
+di chi ha girato il cubo dalla parte opposta — e cerca quello che dà un cubo
+vero. Poi lo mostra: *«Credo di aver capito! I colori sono tutti giusti: è la
+faccia con il centro verde che hai guardato girata in un altro verso»*, con la
+faccia rimessa dritta e un pulsante per confermare.
+
+Misurato prima di attivarlo, perché "sistemare" un cubo nel modo sbagliato
+darebbe al bambino una soluzione che non funziona:
+
+| Caso | Rimessi a posto | Sistemati **male** |
+|------|-----------------|--------------------|
+| Una o due facce guardate girate (300 cubi) | 291/300 | **0** |
+| Cubo girato dalla parte opposta (60 cubi)  | 60/60   | **0** |
+
+Una sola volta su 300 esisteva più di una lettura valida, e anche lì la prima
+proposta era quella giusta. La ricerca costa ~75 ms. Provato anche nel browser
+vero: faccia guardata girata → l'app la riconosce, la raddrizza, e dopo la
+conferma arriva a «IL TUO CUBO È PRONTO».
+
 ---
 
 ## Il linguaggio per bambini

@@ -9,10 +9,15 @@ import FaceGrid from '../components/FaceGrid';
 import Rubi, { RubiMood } from '../components/Rubi';
 import Screen, { Card } from '../components/Screen';
 import { RootStackParamList } from '../navigation';
-import { colorsToFaces, useSession } from '../state/cubeSession';
+import { colorsToFaces, facesToColors, useSession } from '../state/cubeSession';
 import { useStore } from '../state/store';
 import { useVoice } from '../state/voice';
 import { COLOR_LABEL_IT, CubeColor, Face } from '../../core/cube/defs';
+import {
+  LetturaPossibile,
+  MODO_SPECCHIO,
+  recuperaOrientamento,
+} from '../../core/cube/orientation';
 import { ValidationReport, faceletFace, validateFacelets } from '../../core/cube/validator';
 import { solveBeginner } from '../../core/solver/beginner';
 import { solveKociemba } from '../../core/solver/kociemba';
@@ -35,6 +40,9 @@ export default function CheckScreen({ navigation }: Props) {
   const [report, setReport] = useState<ValidationReport | null>(null);
   const [solving, setSolving] = useState(false);
   const [solveError, setSolveError] = useState<string | null>(null);
+  /* Una lettura alternativa dello stesso inserimento, trovata girando le facce
+   * che il bambino potrebbe aver guardato dalla parte sbagliata. */
+  const [salvataggio, setSalvataggio] = useState<LetturaPossibile | null>(null);
 
   const asFaces = useMemo(
     () => (session.colorOfFace ? colorsToFaces(session.colors, session.colorOfFace) : null),
@@ -54,22 +62,63 @@ export default function CheckScreen({ navigation }: Props) {
         });
         return;
       }
-      setReport(validateFacelets(asFaces));
+      const r = validateFacelets(asFaces);
+      setReport(r);
+
+      /*
+       * Se i colori sono contati bene e i centri tornano, ma i pezzi no, quasi
+       * sempre non c'e' niente di sbagliato nei colori: il bambino ha guardato
+       * una faccia girata in un altro verso (capita soprattutto con quella di
+       * sotto, che si puo' guardare in quattro modi tutti naturali). Invece di
+       * dirgli "gli angolini non sono giusti" e lasciarlo li', proviamo tutti i
+       * modi in cui poteva tenere il cubo e vediamo se uno da' un cubo vero.
+       */
+      const soloPezzi =
+        !r.valid &&
+        r.checks.find((c) => c.id === 'counts')?.ok === true &&
+        r.checks.find((c) => c.id === 'centers')?.ok === true;
+      if (soloPezzi) {
+        const rec = recuperaOrientamento(asFaces as Face[]);
+        setSalvataggio(rec.lettura);
+      } else {
+        setSalvataggio(null);
+      }
     }, 900);
     return () => clearTimeout(t);
   }, [asFaces, session.colors]);
 
   const centersProblem = !session.colorOfFace;
 
+  /* La spiegazione del salvataggio: sta qui e non nel render perche' e' anche
+   * quello che Rubi deve DIRE, e due voci sovrapposte confondono. */
+  const spiega = useMemo(() => {
+    if (!salvataggio || !session.colorOfFace) return null;
+    const mappa = session.colorOfFace;
+    if (salvataggio.modo === MODO_SPECCHIO) {
+      return (
+        'Aspetta, credo di aver capito! I colori sono tutti giusti: hai solo girato il cubo ' +
+        'dalla parte opposta di come te l avevo detto. Non fa niente, ho capito lo stesso e ' +
+        'ho rimesso tutto al suo posto. Guarda il tuo cubo: e cosi?'
+      );
+    }
+    const nomi = salvataggio.storte.map((f) => COLOR_LABEL_IT[mappa[f]]);
+    const quale =
+      nomi.length === 1
+        ? `la faccia con il centro ${nomi[0]} l hai guardata girata in un altro verso`
+        : `le facce con il centro ${nomi.join(' e ')} le hai guardate girate in un altro verso`;
+    return `Aspetta, credo di aver capito! I colori sono tutti giusti: e che ${quale}. L ho rimessa a posto io. Guarda il tuo cubo: e cosi?`;
+  }, [salvataggio, session.colorOfFace]);
+
   const says = useMemo(() => {
     if (!report) return 'Controllo il tuo cubo...';
+    if (spiega) return spiega;
     if (centersProblem) {
       return 'Hmm... i quadratini in mezzo alle facce non tornano. Ogni faccia deve avere un centro di colore diverso: controlliamoli insieme!';
     }
     if (report.valid) return 'Il tuo cubo e pronto! Adesso posso trovare il modo migliore per risolverlo!';
     const failed = report.checks.find((c) => !c.ok && c.message);
     return `Credo che abbiamo colorato qualcosa nel modo sbagliato. ${failed?.message ?? 'Controlliamo insieme!'}`;
-  }, [report, centersProblem]);
+  }, [report, spiega, centersProblem]);
 
   useEffect(() => {
     speak(says);
@@ -164,6 +213,56 @@ export default function CheckScreen({ navigation }: Props) {
         </Card>
 
         {solveError ? <Text style={styles.error}>{solveError}</Text> : null}
+      </Screen>
+    );
+  }
+
+  /* --- ho capito come tenevi il cubo: te lo faccio vedere --- */
+  if (salvataggio && session.colorOfFace && spiega) {
+    const mappa = session.colorOfFace;
+
+    const accetta = () => {
+      session.setColors(facesToColors(salvataggio.facelets, mappa));
+      setSalvataggio(null);
+      setReport(null); // rifa' il controllo sui colori sistemati
+    };
+
+    return (
+      <Screen
+        title="Credo di aver capito!"
+        emoji="💡"
+        footer={
+          <View style={{ gap: space.xs }}>
+            <BigButton label="SI, E COSI!" emoji="✅" color={colors.success} giant onPress={accetta} />
+            <BigButton
+              label="No, lo sistemo io"
+              emoji="✏️"
+              color={colors.bgSoft}
+              onPress={() => {
+                setSalvataggio(null);
+                navigation.navigate('Correggi', { face: salvataggio.storte[0] ?? Face.U });
+              }}
+            />
+          </View>
+        }
+      >
+        <Rubi says={spiega} mood="sorpreso" onRepeat={() => repeat(spiega)} />
+
+        <CubeView
+          facelets={facesToColors(salvataggio.facelets, mappa)}
+          spin
+          interactive
+          style={{ maxHeight: 260 }}
+        />
+
+        {salvataggio.storte.map((f) => (
+          <View key={f} style={styles.gridWrap}>
+            <FaceGrid
+              cells={Array.from({ length: 9 }, (_, i) => mappa[salvataggio.facelets[f * 9 + i]])}
+              caption={`La faccia con il centro ${COLOR_LABEL_IT[mappa[f]]}, rimessa dritta`}
+            />
+          </View>
+        ))}
       </Screen>
     );
   }
