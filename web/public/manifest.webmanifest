@@ -1,0 +1,16 @@
+{
+  "name": "My Money Adventure",
+  "short_name": "Money Adventure",
+  "description": "Impara a gestire la paghetta con i tre salvadanai SAVE, SPEND e GIVE.",
+  "lang": "it",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F3FF",
+  "theme_color": "#5B3DF5",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
