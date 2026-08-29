@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -b --noEmit",
-    "icone": "node scripts/genera-icone.mjs"
+    "icone": "node scripts/genera-icone.mjs",
+    "build:locale": "tsc -b && vite build --mode locale --outDir dist-locale"
   },
   "dependencies": {
     "react": "^19.2.0",

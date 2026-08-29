@@ -18,6 +18,13 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Modalità locale: l'app gira senza server, con i dati sul telefono.
+ * Si attiva compilando con VITE_MODALITA=locale (è la versione pubblicata su
+ * GitHub Pages). Con un server disponibile resta tutto come prima.
+ */
+export const MODALITA_LOCALE = (import.meta.env?.VITE_MODALITA as string | undefined) === 'locale';
+
 export class OfflineError extends Error {
   constructor(message = 'Sei offline: l’operazione è stata messa in coda.') {
     super(message);
@@ -103,6 +110,17 @@ export const api = {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const token = opzioni.parent ? this.parentToken : this.token;
     if (token) headers.Authorization = `Bearer ${token}`;
+
+    // Senza server la richiesta viene servita dal motore che gira nel telefono.
+    if (MODALITA_LOCALE) {
+      const { richiestaLocale } = await import('./locale/motore');
+      try {
+        return await richiestaLocale<T>(metodo, percorso, corpo, opzioni, token);
+      } catch (err) {
+        const e = err as { stato?: number; codice?: string; message?: string };
+        throw new ApiError(e.stato ?? 500, e.codice ?? 'ERRORE', e.message ?? 'Qualcosa è andato storto.');
+      }
+    }
 
     let risposta: Response;
     try {

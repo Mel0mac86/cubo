@@ -2,40 +2,9 @@
 import type { Db } from '../db/pool.js';
 import type { HistoryFilter, JarType, TransactionType } from '../domain/types.js';
 import { formatCents } from '../domain/money.js';
+import { FILTRI_STORICO, ICONE_TIPO, ETICHETTE_TIPO } from '../domain/etichette.js';
 
-const FILTRI: Record<HistoryFilter, { tipi?: TransactionType[]; jar?: JarType; direzione?: 'IN' | 'OUT' }> = {
-  TUTTO: {},
-  ENTRATE: { tipi: ['ALLOWANCE', 'JOB', 'GIFT'], direzione: 'IN' },
-  SPESE: { tipi: ['PURCHASE'] },
-  RISPARMIO: { jar: 'SAVE', direzione: 'IN' },
-  DONAZIONI: { tipi: ['DONATION'] },
-  INTERESSI: { tipi: ['INTEREST'] },
-  LAVORI: { tipi: ['JOB'] },
-};
-
-export const ICONE_TIPO: Record<TransactionType, string> = {
-  ALLOWANCE: '💶',
-  JOB: '💪',
-  GIFT: '🎁',
-  PURCHASE: '🛍️',
-  DONATION: '❤️',
-  INTEREST: '🌱',
-  TRANSFER_IN: '↩️',
-  TRANSFER_OUT: '↪️',
-  ADJUSTMENT: '✏️',
-};
-
-export const ETICHETTE_TIPO: Record<TransactionType, string> = {
-  ALLOWANCE: 'Paghetta',
-  JOB: 'Lavoro',
-  GIFT: 'Regalo',
-  PURCHASE: 'Acquisto',
-  DONATION: 'Donazione',
-  INTEREST: 'Interesse',
-  TRANSFER_IN: 'Giroconto',
-  TRANSFER_OUT: 'Giroconto',
-  ADJUSTMENT: 'Correzione',
-};
+export { ICONE_TIPO, ETICHETTE_TIPO };
 
 export interface HistoryItem {
   id: string;
@@ -57,7 +26,7 @@ export async function listHistory(
   childId: string,
   opts: { filter?: HistoryFilter; limit?: number; offset?: number } = {},
 ): Promise<{ items: HistoryItem[]; total: number }> {
-  const filtro = FILTRI[opts.filter ?? 'TUTTO'] ?? {};
+  const filtro = FILTRI_STORICO[opts.filter ?? 'TUTTO'] ?? {};
   const limit = Math.min(200, Math.max(1, opts.limit ?? 50));
   const offset = Math.max(0, opts.offset ?? 0);
 

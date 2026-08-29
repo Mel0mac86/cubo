@@ -12,7 +12,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowImportingTsExtensions": true,
-    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@dominio/*": ["../server/src/domain/*"],
+      "@contenuti/*": ["../server/src/content/*"]
+    }
   },
   "include": ["src", "vite.config.ts"]
 }

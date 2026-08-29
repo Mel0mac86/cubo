@@ -20,7 +20,8 @@
     "db:seed": "npm --workspace server run db:seed",
     "test": "npm --workspace server run test && npm --workspace web run test",
     "test:server": "npm --workspace server run test",
-    "test:web": "npm --workspace web run test"
+    "test:web": "npm --workspace web run test",
+    "build:pages": "npm --workspace web run build:locale && node scripts/pubblica-pages.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

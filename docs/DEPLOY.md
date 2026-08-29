@@ -1,4 +1,80 @@
-# Pubblicare l'app su Render
+# Pubblicare l'app
+
+Due strade, a seconda di cosa ti serve.
+
+| | **GitHub Pages** | **Render** |
+|---|---|---|
+| Serve un computer? | **No** | No (ma serve un account Render) |
+| Costo | Gratis, per sempre | Gratis con limiti |
+| Dove stanno i dati | Solo sul telefono | Su un database PostgreSQL |
+| Più dispositivi / fratelli | No: ogni telefono fa storia a sé | Sì, dati condivisi |
+| Money Coach con AI | No (motore deterministico) | Sì, con chiave API |
+| Funziona offline | Sì, completamente | Sì, completamente |
+
+Se hai solo l'iPhone e vuoi l'app per un bambino, **GitHub Pages basta e avanza**.
+
+---
+
+# A. GitHub Pages (nessun computer)
+
+L'app è già compilata dentro la cartella `docs/` di questo branch, in una versione
+che funziona **interamente dentro il telefono**: stesse regole, stessi calcoli,
+stesse schermate, ma senza server né database.
+
+## 1. Accendi GitHub Pages (una volta sola, dal telefono)
+
+1. Apri il repository su **github.com** in Safari.
+2. Tocca **Settings** (l'ingranaggio; se non lo vedi, apri il menu «···»).
+3. Nel menu di sinistra tocca **Pages**.
+4. Alla voce **Source** scegli **Deploy from a branch**.
+5. Come **Branch** scegli `claude/money-adventure-app-pvgu3r`, come cartella **`/docs`**.
+6. Tocca **Save**.
+
+Dopo circa un minuto, in cima alla stessa pagina compare il link:
+
+```
+https://mel0mac86.github.io/cubo/
+```
+
+## 2. Metti l'app sulla schermata Home
+
+1. Apri quel link in **Safari**.
+2. Tocca **Condividi** → **Aggiungi alla schermata Home** → **Aggiungi**.
+3. Apri l'app dall'icona: parte a tutto schermo, con la sua schermata di avvio.
+
+Al primo avvio puoi creare la tua famiglia oppure premere **«Prova la demo di
+Sofia»** per guardarti intorno.
+
+## 3. Cose da sapere su questa versione
+
+- **I dati stanno solo su quel telefono.** Non passano da nessun server: nessuno
+  può vederli, ma non si sincronizzano nemmeno con altri dispositivi.
+- **Fai un backup ogni tanto.** Profilo (avatar in alto a sinistra) → **Dati e
+  backup** → *Salva un backup*: viene creato un file da tenere in File o su
+  iCloud. Se Safari cancella i dati dei siti, o si toglie l'app dalla schermata
+  Home, senza backup i movimenti registrati si perdono.
+- **La modalità genitore resta protetta dal PIN**, esattamente come nella versione
+  con server: la password di famiglia e il PIN sono salvati cifrati (PBKDF2), non
+  in chiaro.
+- **Il Money Coach funziona senza AI**: usa il motore deterministico, che fa
+  comunque tutti i calcoli e le simulazioni. Una chiave API dentro un sito statico
+  sarebbe leggibile da chiunque, quindi non c'è.
+
+## 4. Aggiornare l'app pubblicata
+
+Chi ha un computer rigenera la cartella con:
+
+```bash
+npm run build:pages   # compila la versione locale e la copia in docs/
+git add docs && git commit -m "Aggiorna l'app pubblicata" && git push
+```
+
+GitHub Pages ripubblica da solo in un minuto. Sul telefono la nuova versione
+arriva alla riapertura successiva.
+
+---
+
+# B. Render (con server e database)
 
 Al termine avrai un indirizzo HTTPS tipo `https://money-adventure.onrender.com` da
 aprire su Safari e aggiungere alla schermata Home dell'iPhone — da qualsiasi rete,

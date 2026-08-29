@@ -84,14 +84,23 @@ Su iPhone non esiste un pulsante «installa»: l'app si aggiunge dal menu **Cond
 di Safari. L'app lo spiega da sola con un riquadro in fondo alla home, e le istruzioni
 restano sempre nel **profilo** (tocca l'avatar in alto a sinistra).
 
-### Opzione A — pubblicata online (link HTTPS, funziona ovunque)
+### Opzione A — GitHub Pages (nessun computer, gratis)
 
-Segui [`docs/DEPLOY.md`](docs/DEPLOY.md): con il file [`render.yaml`](render.yaml) già
-pronto, Render crea database e app in pochi minuti e ti dà un indirizzo tipo
-`https://money-adventure.onrender.com`. È l'unico modo per avere anche l'**avvio
-completamente offline**, che richiede HTTPS.
+L'app è già compilata in [`docs/`](docs/) in una versione che gira **interamente
+dentro il telefono**: niente server, niente database. Basta accendere GitHub Pages
+una volta (Settings → Pages → *Deploy from a branch* → questo branch → `/docs`) e
+si ottiene un link tipo `https://mel0mac86.github.io/cubo/` da aprire in Safari e
+aggiungere alla schermata Home.
 
-### Opzione B — sulla rete di casa
+Passaggi completi e limiti di questa versione: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+### Opzione B — Render, con server e database
+
+Con [`render.yaml`](render.yaml) già pronto, Render crea database e app in pochi
+minuti. Serve quando i dati devono essere condivisi fra più dispositivi o fratelli,
+o quando si vuole il Money Coach con l'AI.
+
+### Opzione C — sulla rete di casa
 
 #### 1. Avvia l'app in modo che il telefono la veda
 
@@ -122,9 +131,8 @@ come un'app installata.
 
 ### Cosa sapere
 
-- **GitHub non basta.** Il link al repository mostra il codice, non esegue l'app:
-  servono un server Node e un database PostgreSQL attivi. Per un link apribile da
-  Safari usa l'opzione A.
+- **Il link al repository non è l'app.** github.com mostra il codice; per aprire
+  l'app serve GitHub Pages acceso (opzione A) o un server (opzione B).
 - **Serve il PNG, non l'SVG.** Safari ignora le icone del manifest e le icone SVG per
   la schermata Home: l'icona vera è `web/public/apple-touch-icon.png` (180×180),
   dichiarata in `index.html`. Senza di essa iOS metterebbe sulla home una miniatura
@@ -138,6 +146,30 @@ come un'app installata.
   l'avvio completamente offline va pubblicata dietro HTTPS.
 - **Android e desktop.** Lì il browser offre l'installazione vera e propria: il riquadro
   mostra direttamente il pulsante «Installa l'app».
+
+---
+
+## Due modalità, stesse regole
+
+L'app può funzionare in due modi. Il codice delle schermate è lo stesso: cambia
+solo chi risponde alle richieste.
+
+| | **Con server** | **Modalità locale** |
+|---|---|---|
+| Chi calcola | API Node + PostgreSQL | Un motore dentro il browser |
+| Dove stanno i dati | Database | `localStorage` del telefono |
+| Più bambini e dispositivi | Sì, condivisi | Uno per telefono |
+| Money Coach | Motore deterministico + AI facoltativa | Solo motore deterministico |
+| Offline | Coda che si sincronizza | Non serve: è già tutto locale |
+
+**Le regole del denaro sono le stesse identiche in entrambe**, perché arrivano
+dagli stessi file: `server/src/domain/` è importato tanto dal server quanto
+dall'app (alias `@dominio`). Aritmetica in centesimi, ripartizione col resto più
+grande, previsioni, interesse composto, XP: un'unica fonte di verità, testata una
+volta sola.
+
+La modalità locale si attiva compilando con `VITE_MODALITA=locale`
+(`npm run build:pages`) ed è quella pubblicata su GitHub Pages.
 
 ---
 

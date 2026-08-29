@@ -7,16 +7,18 @@
  * - le chiamate di scrittura NON vengono mai messe in cache: quando la rete
  *   manca l'app le accoda in locale e le rimanda con /sync.
  */
-const VERSIONE = 'mma-v2';
+const VERSIONE = 'mma-v3';
+// Percorsi relativi al service worker: così funzionano sia sulla radice del
+// dominio sia in una sottocartella (GitHub Pages pubblica in /nome-repo/).
 const GUSCIO = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/icon.svg',
-  '/apple-touch-icon.png',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/favicon-32.png',
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icon.svg',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png',
+  './favicon-32.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -67,7 +69,7 @@ self.addEventListener('fetch', (event) => {
           }
           return risposta;
         })
-        .catch(() => caches.match('/index.html')),
+        .catch(() => caches.match('./index.html')),
     ),
   );
 });

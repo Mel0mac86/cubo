@@ -2,7 +2,9 @@
 import { useState } from 'react';
 import { useApp } from '../state/store';
 import { IstruzioniIPhone } from '../components/Installa';
+import { DatiLocali } from '../components/DatiLocali';
 import { rilevaPiattaforma } from '../lib/installa';
+import { MODALITA_LOCALE } from '../lib/api';
 import { Bottone, Sheet, BarraProgresso, Card } from '../components/ui';
 import { api } from '../lib/api';
 import { formatCents } from '../lib/format';
@@ -88,6 +90,8 @@ export function Profilo({ onChiudi }: { onChiudi: () => void }) {
             📲 Metti l’app sulla schermata Home
           </Bottone>
         )}
+
+        {MODALITA_LOCALE && <DatiLocali onRipristinato={() => window.location.reload()} />}
 
         <Bottone variante="fantasma" onClick={() => { esci(); onChiudi(); }}>
           Esci dall’account
