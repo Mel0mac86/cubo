@@ -1,0 +1,31 @@
+{
+  "artboards": [
+    { "file": "Attuale.dc.html", "x": 0, "y": 0, "w": 390, "h": 844, "title": "Oggi" },
+    { "file": "Main.dc.html", "x": 470, "y": 0, "w": 390, "h": 844, "title": "A · Libretto" },
+    { "file": "DirezioneB.dc.html", "x": 940, "y": 0, "w": 390, "h": 844, "title": "B · Salvadanaio" },
+    { "file": "DirezioneC.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "C · Missione" }
+  ],
+  "annotations": [
+    {
+      "id": "nota-attuale",
+      "x": 0, "y": -210, "w": 390,
+      "text": "OGGI — com'è adesso.\nDue cose si vedono subito: i tre salvadanai non entrano nella prima schermata (GIVE resta sotto la piega), e le icone sono emoji di sistema — cambiano faccia su ogni telefono e non si possono ricolorare."
+    },
+    {
+      "id": "nota-a",
+      "x": 470, "y": -210, "w": 390,
+      "text": "A · LIBRETTO — la direzione che consiglio.\nTipografia forte su carta calda; il colore torna a essere dei soldi, non della cornice. Le settimane mancanti diventano blocchi da riempire: il concetto che l'app insegna è la cosa più visibile della schermata. Tutti e tre i salvadanai entrano sopra la piega.\n\nTradeoff: è la meno «da bambini» delle tre — a 9 anni può risultare seria."
+    },
+    {
+      "id": "nota-b",
+      "x": 940, "y": -210, "w": 390,
+      "text": "B · SALVADANAIO — la metafora resa letterale.\nTre barattoli che si riempiono davvero, in proporzione a quanto contengono: leggibile in un secondo anche a 9 anni. Ombre piene invece che sfumate, niente gradienti.\n\nTradeoff: cresce peggio insieme al bambino, e i barattoli occupano spazio che a schermo serve all'obiettivo."
+    },
+    {
+      "id": "nota-c",
+      "x": 1410, "y": -210, "w": 390,
+      "text": "C · MISSIONE — scura, con XP in evidenza e l'obiettivo come conto alla rovescia.\nParla ai 12-14 anni e mette al centro la costanza; la paghetta da dividere diventa la chiamata all'azione.\n\nTradeoff: spinge sulla gamification, che il progetto voleva tenere a bada («divertente ma non deve creare dipendenza»)."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
