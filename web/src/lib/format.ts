@@ -46,10 +46,19 @@ export function settimaneTesto(weeks: number | null): string {
   return weeks === 1 ? 'circa 1 settimana' : `circa ${weeks} settimane`;
 }
 
+/**
+ * I nomi dei salvadanai come li legge il bambino. I codici SAVE/SPEND/GIVE
+ * restano gli identificatori interni: qui c'è solo quello che si vede.
+ */
 export const JAR_INFO = {
-  SAVE: { nome: 'SAVE', sottotitolo: 'Risparmio', emoji: '🟢', colore: 'var(--save)', descrizione: 'I soldi per il tuo obiettivo' },
-  SPEND: { nome: 'SPEND', sottotitolo: 'Spese', emoji: '🔵', colore: 'var(--spend)', descrizione: 'I soldi che puoi usare adesso' },
-  GIVE: { nome: 'GIVE', sottotitolo: 'Dono', emoji: '🟠', colore: 'var(--give)', descrizione: 'I soldi per aiutare gli altri' },
+  SAVE: { nome: 'RISPARMIO', emoji: '🟢', colore: 'var(--save)', descrizione: 'I soldi per il tuo obiettivo' },
+  SPEND: { nome: 'SPENDO', emoji: '🔵', colore: 'var(--spend)', descrizione: 'Puoi usarli quando vuoi' },
+  GIVE: { nome: 'DONO', emoji: '🟠', colore: 'var(--give)', descrizione: 'I soldi per aiutare gli altri' },
 } as const;
+
+/** Nome leggibile di un salvadanaio a partire dal suo codice. */
+export function nomeJar(jar: JarType): string {
+  return JAR_INFO[jar]?.nome ?? jar;
+}
 
 export type JarType = keyof typeof JAR_INFO;

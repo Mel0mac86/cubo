@@ -59,11 +59,11 @@ export const LESSONS: Lesson[] = [
     pages: [
       { emoji: '🐷', title: 'Mettere da parte', body: 'Risparmiare vuol dire tenere da parte un po’ di soldi oggi per poterli usare domani.' },
       { emoji: '🚲', title: 'Perché funziona', body: 'Una bici da 250 € non arriva in un giorno. Ma 10 € alla settimana per 25 settimane sì. Il risparmio trasforma le cose "impossibili" in cose "tra un po’".', visual: { kind: 'bars' } },
-      { emoji: '🧠', title: 'Il trucco', body: 'Il momento migliore per decidere quanto risparmiare è QUANDO ARRIVANO i soldi, non dopo. Per questo l’app ti fa scegliere subito la divisione fra SAVE, SPEND e GIVE.' },
+      { emoji: '🧠', title: 'Il trucco', body: 'Il momento migliore per decidere quanto risparmiare è QUANDO ARRIVANO i soldi, non dopo. Per questo l’app ti fa scegliere subito la divisione fra RISPARMIO, SPENDO e DONO.' },
     ],
     quiz: [
       { id: 'r1', question: 'Risparmiare significa...', options: ['Non spendere mai', 'Spendere dopo, per qualcosa che conta di più', 'Nascondere i soldi'], correctIndex: 1, explanation: 'Risparmiare è scegliere di rimandare, non di rinunciare.' },
-      { id: 'r2', question: 'Quando conviene decidere quanto mettere in SAVE?', options: ['Appena arrivano i soldi', 'Alla fine del mese', 'Quando ne sono avanzati'], correctIndex: 0, explanation: 'Se aspetti che avanzino, spesso non avanzano!' },
+      { id: 'r2', question: 'Quando conviene decidere quanto mettere in RISPARMIO?', options: ['Appena arrivano i soldi', 'Alla fine del mese', 'Quando ne sono avanzati'], correctIndex: 0, explanation: 'Se aspetti che avanzino, spesso non avanzano!' },
       { id: 'r3', question: 'Quante settimane servono per 100 € risparmiando 10 € a settimana?', options: ['5', '10', '20'], correctIndex: 1, explanation: '100 ÷ 10 = 10 settimane.' },
     ],
   },
@@ -96,13 +96,13 @@ export const LESSONS: Lesson[] = [
     pages: [
       { emoji: '💯', title: 'Per cento = ogni 100', body: '50% vuol dire "50 ogni 100", cioè la metà. 10% vuol dire "10 ogni 100", cioè un decimo.' },
       { emoji: '🧮', title: 'Come si calcola', body: 'Per calcolare il 10% di una cifra, dividi per 10. Il 10% di 20 € è 2 €. Per il 50%, dividi per 2.' },
-      { emoji: '🫙', title: 'Nei tuoi salvadanai', body: 'Se arrivano 10 € e scegli SAVE 60%, SPEND 30%, GIVE 10%, allora: 6 € in SAVE, 3 € in SPEND, 1 € in GIVE. Somma: 10 €. Deve sempre tornare!', visual: { kind: 'jars', data: { save: 60, spend: 30, give: 10 } } },
+      { emoji: '🫙', title: 'Nei tuoi salvadanai', body: 'Se arrivano 10 € e scegli RISPARMIO 60%, SPENDO 30%, DONO 10%, allora: 6 € in RISPARMIO, 3 € in SPENDO, 1 € in DONO. Somma: 10 €. Deve sempre tornare!', visual: { kind: 'jars', data: { save: 60, spend: 30, give: 10 } } },
     ],
     quiz: [
       { id: 'p1', question: 'Quanto fa il 10% di 20 €?', options: ['1 €', '2 €', '10 €'], correctIndex: 1, explanation: '10% = dividere per 10 → 20 ÷ 10 = 2 €.' },
-      { id: 'p2', question: 'SAVE 60 + SPEND 30 + GIVE 10 fa...', options: ['90%', '100%', '110%'], correctIndex: 1, explanation: 'La somma deve sempre essere 100%.' },
+      { id: 'p2', question: 'RISPARMIO 60 + SPENDO 30 + DONO 10 fa...', options: ['90%', '100%', '110%'], correctIndex: 1, explanation: 'La somma deve sempre essere 100%.' },
       { id: 'p3', question: 'Il 50% di 8 € è...', options: ['4 €', '2 €', '8 €'], correctIndex: 0, explanation: '50% è la metà: 8 ÷ 2 = 4 €.' },
-      { id: 'p4', question: 'Se metti 100% in SPEND, quanto va in SAVE?', options: ['Niente', 'Metà', 'Dipende'], correctIndex: 0, explanation: 'Il 100% in un salvadanaio lascia zero negli altri.' },
+      { id: 'p4', question: 'Se metti 100% in SPENDO, quanto va in RISPARMIO?', options: ['Niente', 'Metà', 'Dipende'], correctIndex: 0, explanation: 'Il 100% in un salvadanaio lascia zero negli altri.' },
     ],
   },
   {
@@ -131,14 +131,14 @@ export const LESSONS: Lesson[] = [
     summary: 'È un piccolo premio che ricevi perché lasci i soldi al loro posto.',
     minutes: 2,
     pages: [
-      { emoji: '🌱', title: 'Un premio per la pazienza', body: 'Quando lasci i soldi nel salvadanaio SAVE, ricevi un piccolo extra. Nella tua app il papà o la mamma ti danno, per esempio, 5 centesimi per ogni euro che resta lì per un mese.' },
-      { emoji: '🧮', title: 'Facciamo il conto', body: 'Hai 100 € in SAVE. Ogni euro ti dà 5 centesimi → 100 × 0,05 € = 5 €. Il mese dopo hai 105 €.', visual: { kind: 'growth', data: { start: 10000, rate: 5 } } },
+      { emoji: '🌱', title: 'Un premio per la pazienza', body: 'Quando lasci i soldi nel salvadanaio RISPARMIO, ricevi un piccolo extra. Nella tua app il papà o la mamma ti danno, per esempio, 5 centesimi per ogni euro che resta lì per un mese.' },
+      { emoji: '🧮', title: 'Facciamo il conto', body: 'Hai 100 € in RISPARMIO. Ogni euro ti dà 5 centesimi → 100 × 0,05 € = 5 €. Il mese dopo hai 105 €.', visual: { kind: 'growth', data: { start: 10000, rate: 5 } } },
       { emoji: '💡', title: 'Il segreto', body: 'L’interesse non premia chi ha di più: premia chi ASPETTA. È l’unico modo per guadagnare senza lavorare... ma serve pazienza.' },
     ],
     quiz: [
-      { id: 'i1', question: 'Hai 100 € in SAVE con 5 centesimi per euro. Quanto ricevi in un mese?', options: ['0,50 €', '5 €', '50 €'], correctIndex: 1, explanation: '100 euro × 5 centesimi = 500 centesimi = 5 €.' },
+      { id: 'i1', question: 'Hai 100 € in RISPARMIO con 5 centesimi per euro. Quanto ricevi in un mese?', options: ['0,50 €', '5 €', '50 €'], correctIndex: 1, explanation: '100 euro × 5 centesimi = 500 centesimi = 5 €.' },
       { id: 'i2', question: "L'interesse premia soprattutto...", options: ['Chi spende in fretta', 'Chi lascia i soldi da parte', 'Chi chiede di più'], correctIndex: 1, explanation: 'È un premio per la pazienza.' },
-      { id: 'i3', question: 'Se togli tutti i soldi da SAVE, quanto interesse ricevi?', options: ['Zero', 'Lo stesso di prima', 'Il doppio'], correctIndex: 0, explanation: 'Niente soldi fermi, niente interesse.' },
+      { id: 'i3', question: 'Se togli tutti i soldi da RISPARMIO, quanto interesse ricevi?', options: ['Zero', 'Lo stesso di prima', 'Il doppio'], correctIndex: 0, explanation: 'Niente soldi fermi, niente interesse.' },
     ],
   },
   {
@@ -167,12 +167,12 @@ export const LESSONS: Lesson[] = [
     summary: 'Donare è una scelta: piccola per te, grande per qualcun altro.',
     minutes: 2,
     pages: [
-      { emoji: '❤️', title: 'Il salvadanaio GIVE', body: 'Una parte dei tuoi soldi è per aiutare: persone, animali, l’ambiente. Non è una tassa: è una scelta che fai tu.' },
+      { emoji: '❤️', title: 'Il salvadanaio DONO', body: 'Una parte dei tuoi soldi è per aiutare: persone, animali, l’ambiente. Non è una tassa: è una scelta che fai tu.' },
       { emoji: '🐶', title: 'Piccolo per te, grande per altri', body: '5 € per te sono una merenda. Per un rifugio di animali possono essere una giornata di cibo per un cane.' },
-      { emoji: '🎯', title: 'Scegli tu la causa', body: 'Puoi decidere a chi donare e quando. Puoi anche darti un obiettivo GIVE, esattamente come per la bici.' },
+      { emoji: '🎯', title: 'Scegli tu la causa', body: 'Puoi decidere a chi donare e quando. Puoi anche darti un obiettivo DONO, esattamente come per la bici.' },
     ],
     quiz: [
-      { id: 'be1', question: 'Il salvadanaio GIVE serve a...', options: ['Pagare le tasse', 'Aiutare qualcun altro', 'Risparmiare per te'], correctIndex: 1, explanation: 'GIVE è la parte dedicata agli altri.' },
+      { id: 'be1', question: 'Il salvadanaio DONO serve a...', options: ['Pagare le tasse', 'Aiutare qualcun altro', 'Risparmiare per te'], correctIndex: 1, explanation: 'DONO è la parte dedicata agli altri.' },
       { id: 'be2', question: 'Chi sceglie la causa?', options: ['L’app', 'Tu', 'Nessuno'], correctIndex: 1, explanation: 'La scelta della causa è tua.' },
       { id: 'be3', question: 'Donare poco serve?', options: ['No, serve solo tanto', 'Sì, perché conta per chi riceve', 'Solo se lo sanno gli altri'], correctIndex: 1, explanation: 'Anche piccole cifre cambiano qualcosa per chi le riceve.' },
     ],

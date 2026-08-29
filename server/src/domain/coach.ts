@@ -10,6 +10,7 @@
 import { formatCents, euroToCents, type Cents } from './money.js';
 import { describeWeeks, type WeeklyRate } from './goals.js';
 import { simulatePurchase, type SimulationResult } from './simulator.js';
+import { NOMI_JAR } from './etichette.js';
 
 /**
  * Lo stretto necessario che il Coach deve conoscere dello stato del bambino.
@@ -87,9 +88,9 @@ export function buildDeterministicAnswer(stato: StatoPerCoach, domanda: string):
   const goal = stato.primaryGoal;
   const nome = stato.child.name;
   const facts: string[] = [
-    `SPEND: ${formatCents(stato.jars.SPEND)}`,
-    `SAVE: ${formatCents(stato.jars.SAVE)}`,
-    `GIVE: ${formatCents(stato.jars.GIVE)}`,
+    `${NOMI_JAR.SPEND}: ${formatCents(stato.jars.SPEND)}`,
+    `${NOMI_JAR.SAVE}: ${formatCents(stato.jars.SAVE)}`,
+    `${NOMI_JAR.GIVE}: ${formatCents(stato.jars.GIVE)}`,
     `Ritmo di risparmio: ${formatCents(stato.rate.weeklyCents)} a settimana`,
   ];
   if (goal) {
@@ -119,14 +120,14 @@ export function buildDeterministicAnswer(stato: StatoPerCoach, domanda: string):
         label: 'questo',
       });
       text =
-        `${simulation.affordable ? 'Puoi farlo!' : 'Al momento non ti bastano i soldi in SPEND.'} ` +
+        `${simulation.affordable ? 'Puoi farlo!' : `Al momento non ti bastano i soldi in ${NOMI_JAR.SPEND}.`} ` +
         `Prima però guardiamo insieme cosa succede. ${simulation.message} Vuoi confrontare due possibilità?`;
       options = [
         {
           id: 'A',
           title: 'Comprarlo oggi',
           detail: simulation.affordable
-            ? `Ti restano ${formatCents(simulation.balanceAfterCents)} in SPEND.` +
+            ? `Ti restano ${formatCents(simulation.balanceAfterCents)} in ${NOMI_JAR.SPEND}.` +
               (simulation.opportunitaWeeks && simulation.opportunitaWeeks > 0
                 ? ` L'obiettivo resta a ${describeWeeks(goal?.progress.weeksRemaining ?? null)}.`
                 : '')
@@ -134,7 +135,7 @@ export function buildDeterministicAnswer(stato: StatoPerCoach, domanda: string):
         },
         {
           id: 'B',
-          title: 'Aspettare e mettere questi soldi in SAVE',
+          title: `Aspettare e mettere questi soldi in ${NOMI_JAR.SAVE}`,
           detail:
             simulation.opportunitaWeeks && simulation.opportunitaWeeks > 0 && goal
               ? `${goal.emoji} ${goal.name} arriverebbe circa ${simulation.opportunitaWeeks} settiman${simulation.opportunitaWeeks === 1 ? 'a' : 'e'} prima.`
@@ -157,7 +158,7 @@ export function buildDeterministicAnswer(stato: StatoPerCoach, domanda: string):
         (goal.progress.weeksRemaining !== null
           ? `Al ritmo di ${formatCents(stato.rate.weeklyCents)} a settimana ci arrivi in ${describeWeeks(goal.progress.weeksRemaining)}` +
             (goal.progress.projectedDate ? ` (verso il ${formatDate(goal.progress.projectedDate)}).` : '.')
-          : 'Appena metti qualcosa in SAVE ti dico quante settimane mancano.');
+          : `Appena metti qualcosa in ${NOMI_JAR.SAVE} ti dico quante settimane mancano.`);
       options = [
         { id: 'A', title: 'Continuare così', detail: `${describeWeeks(goal.progress.weeksRemaining)} al ritmo di adesso.` },
         {
@@ -200,7 +201,7 @@ export function buildDeterministicAnswer(stato: StatoPerCoach, domanda: string):
         text =
           `Per mettere insieme ${formatCents(obiettivoImporto)} puoi usare il menu GUADAGNA: ${elenco}. ` +
           `Per esempio ${migliore.emoji} ${migliore.title} ${quante} volt${quante === 1 ? 'a' : 'e'} ti darebbe quello che ti serve. ` +
-          `Ricorda: quando il lavoro viene approvato, i soldi si dividono da soli fra SAVE, SPEND e GIVE.`;
+          `Ricorda: quando il lavoro viene approvato, i soldi si dividono da soli fra ${NOMI_JAR.SAVE}, ${NOMI_JAR.SPEND} e ${NOMI_JAR.GIVE}.`;
       } else {
         text = lavori.length
           ? `Puoi chiedere uno di questi lavoretti: ${elenco}. Quando un genitore approva, i soldi entrano subito nei tuoi salvadanai!`
@@ -208,7 +209,7 @@ export function buildDeterministicAnswer(stato: StatoPerCoach, domanda: string):
       }
       options = [
         { id: 'A', title: 'Fare un lavoretto', detail: lavori.length ? elenco : 'Chiedi a un genitore di crearne uno.' },
-        { id: 'B', title: 'Aspettare la paghetta', detail: `Entra circa ${formatCents(stato.rate.weeklyCents)} a settimana in SAVE.` },
+        { id: 'B', title: 'Aspettare la paghetta', detail: `Entra circa ${formatCents(stato.rate.weeklyCents)} a settimana in ${NOMI_JAR.SAVE}.` },
       ];
       suggestedActions.push({ label: 'Vai a GUADAGNA', action: 'APRI_LAVORI' });
       break;
@@ -216,8 +217,8 @@ export function buildDeterministicAnswer(stato: StatoPerCoach, domanda: string):
 
     case 'QUANTO_HO': {
       text =
-        `Ecco la situazione, ${nome}: in SAVE hai ${formatCents(stato.jars.SAVE)}, in SPEND ${formatCents(stato.jars.SPEND)} ` +
-        `e in GIVE ${formatCents(stato.jars.GIVE)}. In tutto ${formatCents(stato.jars.totalCents)}. ` +
+        `Ecco la situazione, ${nome}: in ${NOMI_JAR.SAVE} hai ${formatCents(stato.jars.SAVE)}, ` +
+        `in ${NOMI_JAR.SPEND} ${formatCents(stato.jars.SPEND)} e in ${NOMI_JAR.GIVE} ${formatCents(stato.jars.GIVE)}. In tutto ${formatCents(stato.jars.totalCents)}. ` +
         (goal ? `Per ${goal.emoji} ${goal.name} mancano ${formatCents(goal.progress.remainingCents)}.` : '');
       break;
     }

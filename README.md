@@ -1,7 +1,7 @@
 # 🪙 My Money Adventure
 
 App educativa per la gestione della paghetta, pensata per bambini **dai 9 anni in su**.
-Tre salvadanai — **SAVE**, **SPEND**, **GIVE** — e un principio unico:
+Tre salvadanai — **RISPARMIO**, **SPENDO**, **DONO** — e un principio unico:
 
 > ### «TU DECIDI. NOI TI MOSTRIAMO COSA SUCCEDE.»
 
@@ -15,13 +15,13 @@ e lo lascia decidere.
 | | Funzione | Dove |
 |---|---|---|
 | 🫙 | Tre salvadanai con saldi reali e movimenti tracciati | `server/src/services/ledger.ts` |
-| 🎚️ | Il bambino divide ogni entrata con gli slider (totale sempre 100%, GIVE mai sotto la soglia) | `server/src/domain/split.ts` |
+| 🎚️ | Il bambino divide ogni entrata con gli slider (totale sempre 100%, DONO mai sotto la soglia) | `server/src/domain/split.ts` |
 | 🎯 | Obiettivi con foto, progresso, settimane mancanti e data prevista | `server/src/domain/goals.ts` |
 | 🔮 | Simulatore delle scelte: due futuri a confronto, nessun blocco | `server/src/domain/simulator.ts` |
 | 💰 | Menu GUADAGNA: lavoretti, richieste, approvazione del genitore | `server/src/services/jobs.ts` |
 | 🌱 | Interesse educativo e interesse composto (100 → 105 → 110,25 → 115,76) | `server/src/domain/interest.ts` |
 | ⭐ | XP e 5 livelli che premiano costanza e comprensione, non l'accumulo | `server/src/domain/xp.ts` |
-| ❤️ | Obiettivi GIVE e donazioni (sempre confermate da un genitore) | `server/src/services/operations.ts` |
+| ❤️ | Obiettivi di dono e donazioni (sempre confermate da un genitore) | `server/src/services/operations.ts` |
 | 🎓 | 10 mini-lezioni da 2-3 minuti con quiz | `server/src/content/lessons.ts` |
 | 🤖 | Money Coach: spiega, simula, non decide mai | `server/src/services/coach.ts` |
 | 👨‍👩‍👧 | Dashboard genitore protetta da PIN | `web/src/screens/Genitore.tsx` |
@@ -173,6 +173,15 @@ La modalità locale si attiva compilando con `VITE_MODALITA=locale`
 
 ---
 
+## I nomi dei salvadanai
+
+Quello che il bambino legge è in italiano — **RISPARMIO**, **SPENDO**, **DONO** —
+mentre nei dati (database, API, tipi) i tre salvadanai restano `SAVE`, `SPEND` e
+`GIVE`: cambiare i codici non darebbe niente a chi usa l'app e romperebbe i dati
+già salvati. Le etichette hanno un'unica fonte, `NOMI_JAR` in
+`server/src/domain/etichette.ts`, condivisa fra server e app: si cambiano lì una
+volta sola.
+
 ## Come funziona il denaro
 
 **Nessun importo è mai un numero a virgola mobile.** Tutti i saldi sono interi in
@@ -199,7 +208,7 @@ deve sempre restituire `ok: true`.
 
 1. **Il genitore inserisce un'entrata.** Di default resta *in attesa*: i soldi non si
    muovono finché il bambino non decide.
-2. **Il bambino sceglie la divisione** con tre slider. Il totale deve fare 100% e GIVE
+2. **Il bambino sceglie la divisione** con tre slider. Il totale deve fare 100% e DONO
    non scende sotto la regola di famiglia (predefinita: 10%). La scelta finisce nello storico.
 3. **Le monete volano** nei tre salvadanai, l'obiettivo si aggiorna, arrivano gli XP.
 4. **Prima di comprare**, il simulatore mostra i due futuri:
@@ -210,9 +219,9 @@ deve sempre restituire `ok: true`.
    «Questo acquisto potrebbe spostare il tuo obiettivo di circa 2 settimane.»
    ```
 
-   L'acquisto **non viene mai impedito**. Se paga da SPEND l'obiettivo non si muove:
-   l'app mostra allora il *costo-opportunità* («se li mettessi in SAVE arriveresti
-   1 settimana prima»). Se paga da SAVE, il ritardo è reale e si vede.
+   L'acquisto **non viene mai impedito**. Se paga da SPENDO l'obiettivo non si muove:
+   l'app mostra allora il *costo-opportunità* («se li mettessi in RISPARMIO arriveresti
+   1 settimana prima»). Se paga da RISPARMIO, il ritardo è reale e si vede.
 5. **Se vuole accelerare**, apre GUADAGNA, chiede un lavoretto, un genitore approva
    e i soldi entrano già divisi.
 
@@ -227,8 +236,8 @@ deve sempre restituire `ok: true`.
 - La **modalità genitore** si apre solo con il **PIN** e produce un token separato che
   scade da solo (30 minuti). Con il token del bambino ogni rotta `/api/parent/*`
   risponde `403` — c'è un test apposito.
-- Le **donazioni** escono dal salvadanaio GIVE solo tramite una rotta riservata al
-  genitore: nessuna uscita di denaro senza conferma esplicita.
+- Le **donazioni** escono dal salvadanaio del dono solo tramite una rotta riservata
+  al genitore: nessuna uscita di denaro senza conferma esplicita.
 - Le risposte corrette dei quiz **non escono mai dal server** prima della consegna.
 - Dati raccolti: nome, età facoltativa, avatar. Nient'altro.
 

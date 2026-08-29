@@ -14,7 +14,7 @@ import { previewSplit, validateSplit } from '@dominio/split.js';
 import { computeGoalProgress, estimateWeeklySavingRate, weeklyFromAllowance, type WeeklyRate } from '@dominio/goals.js';
 import { computeMonthlyInterest, periodKey, projectCompound } from '@dominio/interest.js';
 import { levelFromXp, XP_RULES, xpForSaving, type XpReason } from '@dominio/xp.js';
-import { CAUSE_INFO, ETICHETTE_TIPO, FILTRI_STORICO, ICONE_TIPO, messaggioGive } from '@dominio/etichette.js';
+import { CAUSE_INFO, ETICHETTE_TIPO, FILTRI_STORICO, ICONE_TIPO, NOMI_JAR, messaggioGive } from '@dominio/etichette.js';
 import { DONATION_CAUSES, type DonationCause, type HistoryFilter, type JarType, type Split, type TransactionType } from '@dominio/types.js';
 import { LESSONS, getLesson } from '@contenuti/lessons.js';
 import { nuovoId, type Archivio, type BambinoLocale, type ObiettivoLocale, type TransazioneLocale } from './archivio';
@@ -75,7 +75,7 @@ export function registra(
       throw new ErroreLocale(
         400,
         'FONDI_INSUFFICIENTI',
-        `Nel salvadanaio ${m.jar} ci sono ${formatCents(correnti[m.jar])}, ma ne servono ${formatCents(Math.abs(m.amountCents))}.`,
+        `Nel salvadanaio ${NOMI_JAR[m.jar]} ci sono ${formatCents(correnti[m.jar])}, ma ne servono ${formatCents(Math.abs(m.amountCents))}.`,
       );
     }
     create.push({
@@ -279,10 +279,11 @@ export function aggiungiEntrata(
   if (dati.split.give > b.settings.minGivePercent) sbloccaBadge(a, childId, 'CUORE_GRANDE', 'Cuore grande', '💛');
 
   const messages = [
-    `Hai diviso ${formatCents(dati.amountCents)}: ${formatCents(quotaSave)} in SAVE, ${formatCents(quotaSpend)} in SPEND, ${formatCents(quotaGive)} in GIVE.`,
+    `Hai diviso ${formatCents(dati.amountCents)}: ${formatCents(quotaSave)} in ${NOMI_JAR.SAVE}, ` +
+      `${formatCents(quotaSpend)} in ${NOMI_JAR.SPEND}, ${formatCents(quotaGive)} in ${NOMI_JAR.GIVE}.`,
   ];
   const celebrations = ['MONETE'];
-  avvisa(a, childId, 'RISPARMIO', '🎉', `Hai messo da parte ${formatCents(quotaSave)} in SAVE!`);
+  avvisa(a, childId, 'RISPARMIO', '🎉', `Hai messo da parte ${formatCents(quotaSave)} in ${NOMI_JAR.SAVE}!`);
 
   if (goal && quotaSave > 0) {
     const risparmiato = risparmiatoPer(a, a.obiettivi.find((g) => g.id === goal.id)!);
@@ -340,7 +341,10 @@ export function registraSpesa(
   if (dati.simulated) xp.push(assegnaXp(a, childId, 'SIMULATORE_USATO'));
   sbloccaBadge(a, childId, 'PRIMA_SPESA', 'Prima spesa registrata', '🧾');
 
-  return { transactions, xp, celebrations: [], messages: [`Hai registrato ${descrizione}: ${formatCents(dati.amountCents)} da ${jar}.`] };
+  return {
+    transactions, xp, celebrations: [],
+    messages: [`Hai registrato ${descrizione}: ${formatCents(dati.amountCents)} da ${NOMI_JAR[jar]}.`],
+  };
 }
 
 export function completaObiettivo(a: Archivio, childId: string, goalId: string): EsitoOperazione {
@@ -431,8 +435,8 @@ export function dona(
       obiettivoGive.completedAt = new Date().toISOString();
       xp.push(assegnaXp(a, childId, 'OBIETTIVO_GIVE_COMPLETATO'));
       celebrations.push('CONFETTI');
-      messages.push(`🎉 OBIETTIVO GIVE COMPLETATO: ${obiettivoGive.title}!`);
-      avvisa(a, childId, 'DONAZIONE', '🎉', `Obiettivo GIVE completato: ${obiettivoGive.title}!`);
+      messages.push(`🎉 OBIETTIVO ${NOMI_JAR.GIVE} COMPLETATO: ${obiettivoGive.title}!`);
+      avvisa(a, childId, 'DONAZIONE', '🎉', `Obiettivo ${NOMI_JAR.GIVE} completato: ${obiettivoGive.title}!`);
     }
   }
   avvisa(a, childId, 'DONAZIONE', '❤️', `Hai donato ${formatCents(dati.amountCents)}. Sei stato generoso!`);
@@ -489,7 +493,8 @@ export function accreditaInteresse(
     xp,
     celebrations: ['CRESCITA'],
     messages: [
-      `Avevi ${formatCents(calcolo.baseCents)} in SAVE. Interesse: ${formatCents(calcolo.interestCents)}. Nuovo saldo: ${formatCents(calcolo.newBalanceCents)}.`,
+      `Avevi ${formatCents(calcolo.baseCents)} in ${NOMI_JAR.SAVE}. Interesse: ${formatCents(calcolo.interestCents)}. ` +
+        `Nuovo saldo: ${formatCents(calcolo.newBalanceCents)}.`,
     ],
     interestCents: calcolo.interestCents,
   };
@@ -507,10 +512,13 @@ export function giroconto(
   const goal = obiettivoPrincipale(a, childId, ritmoSettimanale(a, childId));
   const motivo = dati.reason?.trim() || 'Giroconto';
   const transactions = registra(a, childId, [
-    { jar: dati.from, amountCents: -dati.amountCents, type: 'TRANSFER_OUT', description: `${motivo} → ${dati.to}`, source: 'genitore', goalId: dati.from === 'SAVE' ? goal?.id ?? null : null },
-    { jar: dati.to, amountCents: dati.amountCents, type: 'TRANSFER_IN', description: `${motivo} ← ${dati.from}`, source: 'genitore', goalId: dati.to === 'SAVE' ? goal?.id ?? null : null },
+    { jar: dati.from, amountCents: -dati.amountCents, type: 'TRANSFER_OUT', description: `${motivo} → ${NOMI_JAR[dati.to]}`, source: 'genitore', goalId: dati.from === 'SAVE' ? goal?.id ?? null : null },
+    { jar: dati.to, amountCents: dati.amountCents, type: 'TRANSFER_IN', description: `${motivo} ← ${NOMI_JAR[dati.from]}`, source: 'genitore', goalId: dati.to === 'SAVE' ? goal?.id ?? null : null },
   ]);
-  return { transactions, xp: [], celebrations: [], messages: [`Spostati ${formatCents(dati.amountCents)} da ${dati.from} a ${dati.to}.`] };
+  return {
+    transactions, xp: [], celebrations: [],
+    messages: [`Spostati ${formatCents(dati.amountCents)} da ${NOMI_JAR[dati.from]} a ${NOMI_JAR[dati.to]}.`],
+  };
 }
 
 // ----------------------------------------------------------------- STORICO

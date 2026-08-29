@@ -9,6 +9,7 @@ import { createApp } from '../src/app.js';
 import { migrate } from '../src/db/migrate.js';
 import { pool, closePool } from '../src/db/pool.js';
 import { euroToCents } from '../src/domain/money.js';
+import { NOMI_JAR } from '../src/domain/etichette.js';
 
 const app = createApp();
 
@@ -82,7 +83,7 @@ describe('Autenticazione e sicurezza', () => {
   });
 });
 
-describe('Entrate e divisione SAVE / SPEND / GIVE', () => {
+describe('Entrate e divisione fra i tre salvadanai', () => {
   it('il genitore inserisce la paghetta e il bambino decide come dividerla', async () => {
     const entrata = await conGenitore(request(app).post(`/api/parent/children/${childId}/income`)).send({
       amountCents: euroToCents(10),
@@ -132,13 +133,13 @@ describe('Entrate e divisione SAVE / SPEND / GIVE', () => {
     expect(r.body.error.message).toMatch(/100%/);
   });
 
-  it('impedisce a GIVE di scendere sotto il minimo di famiglia', async () => {
+  it('impedisce al salvadanaio del dono di scendere sotto il minimo di famiglia', async () => {
     const entrata = await conGenitore(request(app).post(`/api/parent/children/${childId}/income`)).send({ amountCents: 1000 });
     const r = await conFamiglia(
       request(app).post(`/api/children/${childId}/pending-incomes/${entrata.body.pending.id}/allocate`),
     ).send({ split: { save: 70, spend: 25, give: 5 } });
     expect(r.status).toBe(400);
-    expect(r.body.error.message).toMatch(/GIVE/);
+    expect(r.body.error.message).toContain(NOMI_JAR.GIVE);
   });
 
   it('la stessa entrata non può essere divisa due volte', async () => {
@@ -362,7 +363,7 @@ describe('Interesse, donazioni e impostazioni', () => {
     expect(r.body.steps.map((s: any) => s.endCents)).toEqual([10500, 11025, 11576, 12155]);
   });
 
-  it('la donazione esce da GIVE solo con la conferma del genitore', async () => {
+  it('la donazione esce dal salvadanaio del dono solo con la conferma del genitore', async () => {
     await metti(euroToCents(20), { save: 0, spend: 0, give: 100 });
     const obiettivo = await conFamiglia(request(app).post(`/api/children/${childId}/donation-goals`)).send({
       title: 'Rifugio animali',
@@ -386,7 +387,7 @@ describe('Interesse, donazioni e impostazioni', () => {
     expect(r.status).toBe(201);
     expect(r.body.state.jars.GIVE).toBe(0);
     expect(r.body.state.give.totalDonatedCents).toBe(2000);
-    expect(r.body.messages.join(' ')).toMatch(/OBIETTIVO GIVE COMPLETATO/);
+    expect(r.body.messages.join(' ')).toContain(`OBIETTIVO ${NOMI_JAR.GIVE} COMPLETATO`);
   });
 
   it('cambiando la regola GIVE si adegua anche la divisione predefinita', async () => {

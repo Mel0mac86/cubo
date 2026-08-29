@@ -1,7 +1,7 @@
 {
   "name": "My Money Adventure",
   "short_name": "Money Adventure",
-  "description": "Impara a gestire la paghetta con i tre salvadanai SAVE, SPEND e GIVE.",
+  "description": "Impara a gestire la paghetta con i tre salvadanai RISPARMIO, SPENDO e DONO.",
   "lang": "it",
   "dir": "ltr",
   "start_url": "./",

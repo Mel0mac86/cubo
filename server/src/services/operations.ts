@@ -11,6 +11,7 @@ import { previewSplit, validateSplit } from '../domain/split.js';
 import { computeMonthlyInterest, periodKey } from '../domain/interest.js';
 import { xpForSaving } from '../domain/xp.js';
 import type { JarType, Split, TransactionType, DonationCause } from '../domain/types.js';
+import { NOMI_JAR } from '../domain/etichette.js';
 import { getJarBalances, postEntries, type LedgerEntry } from './ledger.js';
 import { awardXp, notify, unlockAchievement, computeSavingStreak, type XpResult } from './gamification.js';
 import { getChild } from './children.js';
@@ -91,11 +92,12 @@ export async function addIncome(client: PoolClient, childId: string, input: Inco
   const messages: string[] = [];
   const celebrations: string[] = ['MONETE'];
   messages.push(
-    `Hai diviso ${formatCents(input.amountCents)}: ${formatCents(quotaSave)} in SAVE, ` +
-      `${formatCents(parti.find((p) => p.jar === 'SPEND')!.amountCents)} in SPEND, ${formatCents(quotaGive)} in GIVE.`,
+    `Hai diviso ${formatCents(input.amountCents)}: ${formatCents(quotaSave)} in ${NOMI_JAR.SAVE}, ` +
+      `${formatCents(parti.find((p) => p.jar === 'SPEND')!.amountCents)} in ${NOMI_JAR.SPEND}, ` +
+      `${formatCents(quotaGive)} in ${NOMI_JAR.GIVE}.`,
   );
 
-  await notify(client, childId, 'RISPARMIO', '🎉', `Hai messo da parte ${formatCents(quotaSave)} in SAVE!`);
+  await notify(client, childId, 'RISPARMIO', '🎉', `Hai messo da parte ${formatCents(quotaSave)} in ${NOMI_JAR.SAVE}!`);
 
   // L'obiettivo si e' avvicinato: e' il feedback educativo piu' importante.
   if (goalCorrente && quotaSave > 0) {
@@ -179,7 +181,7 @@ export async function registerPurchase(client: PoolClient, childId: string, inpu
   if (input.simulated) xp.push(await awardXp(client, childId, 'SIMULATORE_USATO'));
   await unlockAchievement(client, childId, 'PRIMA_SPESA', 'Prima spesa registrata', '🧾');
 
-  const messages = [`Hai registrato ${descrizione}: ${formatCents(input.amountCents)} da ${jar}.`];
+  const messages = [`Hai registrato ${descrizione}: ${formatCents(input.amountCents)} da ${NOMI_JAR[jar]}.`];
   return { transactions, xp, celebrations: [], messages };
 }
 
@@ -302,8 +304,8 @@ export async function makeDonation(client: PoolClient, childId: string, input: D
     if (completato) {
       xp.push(await awardXp(client, childId, 'OBIETTIVO_GIVE_COMPLETATO', { metadata: { id: obiettivoGive.id } }));
       celebrations.push('CONFETTI');
-      messages.push(`🎉 OBIETTIVO GIVE COMPLETATO: ${obiettivoGive.title}!`);
-      await notify(client, childId, 'DONAZIONE', '🎉', `Obiettivo GIVE completato: ${obiettivoGive.title}!`);
+      messages.push(`🎉 OBIETTIVO ${NOMI_JAR.GIVE} COMPLETATO: ${obiettivoGive.title}!`);
+      await notify(client, childId, 'DONAZIONE', '🎉', `Obiettivo ${NOMI_JAR.GIVE} completato: ${obiettivoGive.title}!`);
     }
   }
 
@@ -370,7 +372,7 @@ export async function accrueInterest(
     xp,
     celebrations: ['CRESCITA'],
     messages: [
-      `Avevi ${formatCents(calcolo.baseCents)} in SAVE. Interesse: ${formatCents(calcolo.interestCents)}. ` +
+      `Avevi ${formatCents(calcolo.baseCents)} in ${NOMI_JAR.SAVE}. Interesse: ${formatCents(calcolo.interestCents)}. ` +
         `Nuovo saldo: ${formatCents(calcolo.newBalanceCents)}.`,
     ],
     interestCents: calcolo.interestCents,
@@ -394,7 +396,7 @@ export async function transferBetweenJars(
       jar: input.from,
       amountCents: -input.amountCents,
       type: 'TRANSFER_OUT',
-      description: `${motivo} → ${input.to}`,
+      description: `${motivo} → ${NOMI_JAR[input.to]}`,
       source: 'genitore',
       goalId: input.from === 'SAVE' ? goal?.id ?? null : null,
     },
@@ -402,7 +404,7 @@ export async function transferBetweenJars(
       jar: input.to,
       amountCents: input.amountCents,
       type: 'TRANSFER_IN',
-      description: `${motivo} ← ${input.from}`,
+      description: `${motivo} ← ${NOMI_JAR[input.from]}`,
       source: 'genitore',
       goalId: input.to === 'SAVE' ? goal?.id ?? null : null,
     },
@@ -412,6 +414,6 @@ export async function transferBetweenJars(
     transactions,
     xp: [],
     celebrations: [],
-    messages: [`Spostati ${formatCents(input.amountCents)} da ${input.from} a ${input.to}. (${child.name})`],
+    messages: [`Spostati ${formatCents(input.amountCents)} da ${NOMI_JAR[input.from]} a ${NOMI_JAR[input.to]}. (${child.name})`],
   };
 }

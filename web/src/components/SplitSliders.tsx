@@ -1,15 +1,15 @@
 /**
- * I tre slider SAVE / SPEND / GIVE.
- * Il totale è sempre 100% e GIVE non può scendere sotto la regola di famiglia:
+ * I tre slider dei salvadanai (SAVE / SPEND / GIVE nei dati).
+ * Il totale è sempre 100% e il dono non può scendere sotto la regola di famiglia:
  * l'app corregge da sola invece di dare errori al bambino.
  */
-import { formatCents } from '../lib/format';
+import { formatCents, JAR_INFO } from '../lib/format';
 import { normalizzaSplit, ripartisci, splitValido, type Split } from '../lib/split';
 
 const RIGHE: { chiave: keyof Split; etichetta: string; emoji: string; classe: string }[] = [
-  { chiave: 'save', etichetta: 'SAVE', emoji: '🟢', classe: 'slider-save' },
-  { chiave: 'spend', etichetta: 'SPEND', emoji: '🔵', classe: 'slider-spend' },
-  { chiave: 'give', etichetta: 'GIVE', emoji: '🟠', classe: 'slider-give' },
+  { chiave: 'save', etichetta: JAR_INFO.SAVE.nome, emoji: JAR_INFO.SAVE.emoji, classe: 'slider-save' },
+  { chiave: 'spend', etichetta: JAR_INFO.SPEND.nome, emoji: JAR_INFO.SPEND.emoji, classe: 'slider-spend' },
+  { chiave: 'give', etichetta: JAR_INFO.GIVE.nome, emoji: JAR_INFO.GIVE.emoji, classe: 'slider-give' },
 ];
 
 export function SplitSliders({
@@ -51,7 +51,7 @@ export function SplitSliders({
             onChange={(e) => onChange(normalizzaSplit({ ...split, [riga.chiave]: Number(e.target.value) }, minGive, riga.chiave))}
           />
           {riga.chiave === 'give' && minGive > 0 && (
-            <span className="aiuto piccolo morbido">In famiglia avete deciso: GIVE almeno {minGive}%.</span>
+            <span className="aiuto piccolo morbido">In famiglia avete deciso: {JAR_INFO.GIVE.nome} almeno {minGive}%.</span>
           )}
         </div>
       ))}

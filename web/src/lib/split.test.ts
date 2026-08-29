@@ -26,7 +26,7 @@ describe('Regole degli slider (lato telefono)', () => {
     }
   });
 
-  it('non lascia scendere GIVE sotto la regola di famiglia', () => {
+  it('non lascia scendere il dono sotto la regola di famiglia', () => {
     const n = normalizzaSplit({ save: 70, spend: 25, give: 5 }, 10, 'give');
     expect(n.give).toBe(10);
     expect(splitValido(n, 10)).toBe(true);

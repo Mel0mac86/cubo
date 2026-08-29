@@ -1,5 +1,5 @@
 /**
- * SPEND + SIMULATORE DELLE SCELTE.
+ * Salvadanaio SPENDO + SIMULATORE DELLE SCELTE.
  * Principio: "TU DECIDI. NOI TI MOSTRIAMO COSA SUCCEDE."
  * Il simulatore non impedisce nulla: mostra i due futuri e lascia scegliere.
  */
@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useApp, nuovoClientId } from '../state/store';
 import { api } from '../lib/api';
 import { Bottone, Campo, CampoEuro, Card, Sheet, Vuoto, SceltaEmoji } from '../components/ui';
-import { formatCents, formatDayMonth, settimaneTesto } from '../lib/format';
+import { formatCents, formatDayMonth, settimaneTesto, JAR_INFO, nomeJar } from '../lib/format';
 
 const EMOJI_SPESE = ['🛍️', '🍦', '🎮', '🍭', '📚', '🧸', '👕', '🎨', '🍕', '✨'];
 
@@ -72,7 +72,7 @@ export function Spendi() {
         <div className="riga">
           <span style={{ fontSize: 40 }}>🔵</span>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '.06em' }}>SPEND</div>
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '.06em' }}>{JAR_INFO.SPEND.nome}</div>
             <div style={{ fontSize: 34, fontWeight: 800 }}>{formatCents(stato.jars.SPEND)}</div>
             <div className="piccolo">Sono tuoi: puoi usarli quando vuoi.</div>
           </div>
@@ -97,7 +97,7 @@ export function Spendi() {
                 <div className="testo">
                   <div className="titolo">{s.description}</div>
                   <div className="sotto">
-                    {formatDayMonth(s.occurredAt)} · da {s.jar}
+                    {formatDayMonth(s.occurredAt)} · da {nomeJar(s.jar)}
                   </div>
                 </div>
                 <div className="importo">{formatCents(Math.abs(s.amountCents))}</div>
@@ -120,10 +120,10 @@ export function Spendi() {
             <Campo label="Da quale salvadanaio?">
               <div className="riga-bottoni">
                 <Bottone variante={jar === 'SPEND' ? 'spend' : 'neutro'} onClick={() => { setJar('SPEND'); setSimulazione(null); }}>
-                  🔵 SPEND
+                  {JAR_INFO.SPEND.emoji} {JAR_INFO.SPEND.nome}
                 </Bottone>
                 <Bottone variante={jar === 'SAVE' ? 'save' : 'neutro'} onClick={() => { setJar('SAVE'); setSimulazione(null); }}>
-                  🟢 SAVE
+                  {JAR_INFO.SAVE.emoji} {JAR_INFO.SAVE.nome}
                 </Bottone>
               </div>
             </Campo>
@@ -173,7 +173,7 @@ export function RisultatoSimulazione({ simulazione, compatto }: { simulazione: a
             {s.impact === 'RITARDO'
               ? `Questo acquisto potrebbe spostare il tuo obiettivo di ${settimaneTesto(s.deltaWeeks).replace('circa ', '')}.`
               : s.impact === 'COSTO_OPPORTUNITA'
-                ? `Il tuo obiettivo non cambia. Però se mettessi questi soldi in SAVE, ${s.goalName} arriverebbe ${settimaneTesto(s.opportunitaWeeks).replace('circa ', '')} prima.`
+                ? `Il tuo obiettivo non cambia. Però se mettessi questi soldi in ${JAR_INFO.SAVE.nome}, ${s.goalName} arriverebbe ${settimaneTesto(s.opportunitaWeeks).replace('circa ', '')} prima.`
                 : 'Il tuo obiettivo resta più o meno alla stessa distanza.'}
           </div>
         </>

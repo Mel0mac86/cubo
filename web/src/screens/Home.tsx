@@ -4,7 +4,7 @@ import { useApp, nuovoClientId } from '../state/store';
 import { api } from '../lib/api';
 import { Bottone, Card, BarraProgresso, Sheet, Vuoto } from '../components/ui';
 import { SplitSliders } from '../components/SplitSliders';
-import { formatCents, formatDayMonth, settimaneTesto, formatDate, formatPercent } from '../lib/format';
+import { formatCents, formatDayMonth, settimaneTesto, formatDate, formatPercent, JAR_INFO } from '../lib/format';
 import { splitValido, type Split } from '../lib/split';
 import { monetineVerso } from '../lib/celebrate';
 import { SuggerimentoInstallazione } from '../components/Installa';
@@ -114,7 +114,7 @@ export function Home({ vaiA }: { vaiA: (schermata: string, dati?: unknown) => vo
         <button id="salvadanaio-SAVE" className="salvadanaio save" onClick={() => vaiA('obiettivi')}>
           <span className="icona">🟢</span>
           <span>
-            <span className="nome">SAVE</span>
+            <span className="nome">{JAR_INFO.SAVE.nome}</span>
             <div className="importo">{formatCents(jars.SAVE)}</div>
             <span className="nota">{primaryGoal ? `Per ${primaryGoal.name}` : 'Il tuo risparmio'}</span>
           </span>
@@ -124,9 +124,9 @@ export function Home({ vaiA }: { vaiA: (schermata: string, dati?: unknown) => vo
         <button id="salvadanaio-SPEND" className="salvadanaio spend" onClick={() => vaiA('spendi')}>
           <span className="icona">🔵</span>
           <span>
-            <span className="nome">SPEND</span>
+            <span className="nome">{JAR_INFO.SPEND.nome}</span>
             <div className="importo">{formatCents(jars.SPEND)}</div>
-            <span className="nota">Puoi usarli quando vuoi</span>
+            <span className="nota">{JAR_INFO.SPEND.descrizione}</span>
           </span>
           <span className="freccia">›</span>
         </button>
@@ -134,7 +134,7 @@ export function Home({ vaiA }: { vaiA: (schermata: string, dati?: unknown) => vo
         <button id="salvadanaio-GIVE" className="salvadanaio give" onClick={() => vaiA('dona')}>
           <span className="icona">🟠</span>
           <span>
-            <span className="nome">GIVE</span>
+            <span className="nome">{JAR_INFO.GIVE.nome}</span>
             <div className="importo">{formatCents(jars.GIVE)}</div>
             <span className="nota">Donati finora: {formatCents(stato.give.totalDonatedCents)}</span>
           </span>

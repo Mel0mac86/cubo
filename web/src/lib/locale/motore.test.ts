@@ -1,11 +1,12 @@
 /**
  * Test del motore che gira dentro il telefono (versione senza server).
- * Verifica le stesse garanzie dei test dell'API: divisione esatta, GIVE mai
+ * Verifica le stesse garanzie dei test dell'API: divisione esatta, dono mai
  * sotto la soglia, saldi mai negativi, modalità genitore protetta dal PIN.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { richiestaLocale } from './motore';
 import { azzeraArchivio, esportaBackup, importaBackup, leggiArchivio } from './archivio';
+import { NOMI_JAR } from '@dominio/etichette.js';
 
 const REGISTRAZIONE = {
   familyName: 'Famiglia Prova',
@@ -103,11 +104,11 @@ describe('Entrate e divisione', () => {
     ).rejects.toThrow(/100%/);
   });
 
-  it('GIVE non può scendere sotto la regola di famiglia', async () => {
+  it('il dono non può scendere sotto la regola di famiglia', async () => {
     const pendingId = await nuovaEntrata(1000);
     await expect(
       richiestaLocale('POST', `/children/${childId}/pending-incomes/${pendingId}/allocate`, { split: { save: 70, spend: 25, give: 5 } }),
-    ).rejects.toThrow(/GIVE/);
+    ).rejects.toThrow(new RegExp(NOMI_JAR.GIVE));
   });
 
   it('la stessa entrata non si divide due volte', async () => {
@@ -124,7 +125,7 @@ describe('Obiettivi, spese e simulatore', () => {
     return r;
   }
 
-  it('l’obiettivo si aggiorna quando entrano soldi in SAVE', async () => {
+  it('l’obiettivo si aggiorna quando entrano soldi nel risparmio', async () => {
     await richiestaLocale('POST', `/children/${childId}/goals`, { name: 'Bicicletta', emoji: '🚲', targetCents: 25000 });
     await genitore('PATCH', `/parent/children/${childId}/settings`, { minGivePercent: 0 });
     await conSoldi(5000);
@@ -151,7 +152,7 @@ describe('Obiettivi, spese e simulatore', () => {
     expect(r.deltaWeeks).toBe(0);
   });
 
-  it('completa l’obiettivo e preleva da SAVE', async () => {
+  it('completa l’obiettivo e preleva dal risparmio', async () => {
     await genitore('PATCH', `/parent/children/${childId}/settings`, { minGivePercent: 0 });
     await richiestaLocale('POST', `/children/${childId}/goals`, { name: 'Cuffie', emoji: '🎧', targetCents: 3000 });
     await conSoldi(4000);
@@ -198,7 +199,7 @@ describe('Lavori, interesse e donazioni', () => {
     expect(secondo.state.jars.SAVE).toBe(10500);
   });
 
-  it('la donazione esce da GIVE solo con il permesso del genitore', async () => {
+  it('la donazione esce dal dono solo con il permesso del genitore', async () => {
     await genitore('POST', `/parent/children/${childId}/income`, { amountCents: 2000, mode: 'AUTO', split: { save: 0, spend: 0, give: 100 } });
     const obiettivo = await richiestaLocale<any>('POST', `/children/${childId}/donation-goals`, {
       title: 'Rifugio animali', cause: 'ANIMALI', targetCents: 2000,
@@ -213,7 +214,7 @@ describe('Lavori, interesse e donazioni', () => {
     });
     expect(r.state.jars.GIVE).toBe(0);
     expect(r.state.give.totalDonatedCents).toBe(2000);
-    expect(r.messages.join(' ')).toMatch(/OBIETTIVO GIVE COMPLETATO/);
+    expect(r.messages.join(' ')).toContain(`OBIETTIVO ${NOMI_JAR.GIVE} COMPLETATO`);
   });
 });
 

@@ -3,6 +3,7 @@ import type { Db } from '../db/pool.js';
 import { notFound, badRequest, locked } from '../errors.js';
 import type { Child, ChildSettings, Split } from '../domain/types.js';
 import { validateSplit } from '../domain/split.js';
+import { NOMI_JAR } from '../domain/etichette.js';
 
 export function mapSettings(row: Record<string, any>): ChildSettings {
   return {
@@ -102,7 +103,7 @@ export async function updateSettings(db: Db, childId: string, input: UpdateSetti
   const attuale = (await getChild(db, childId)).settings;
   const minGive = input.minGivePercent ?? attuale.minGivePercent;
   if (minGive < 0 || minGive > 100 || !Number.isInteger(minGive)) {
-    throw badRequest('La percentuale minima di GIVE deve essere un numero intero fra 0 e 100.');
+    throw badRequest(`La percentuale minima di ${NOMI_JAR.GIVE} deve essere un numero intero fra 0 e 100.`);
   }
 
   let split = input.defaultSplit ?? attuale.defaultSplit;

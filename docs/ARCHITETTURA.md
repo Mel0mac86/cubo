@@ -79,6 +79,13 @@ CREATE UNIQUE INDEX uq_tx_client_id ON transactions(child_id, client_id) WHERE c
 UNIQUE (child_id, period_key)
 ```
 
+## I nomi dei salvadanai
+
+`SAVE` / `SPEND` / `GIVE` sono gli identificatori interni: enum del database,
+valori delle API, tipi TypeScript. Quello che l'utente legge — **RISPARMIO**,
+**SPENDO**, **DONO** — vive in `NOMI_JAR` (`domain/etichette.ts`), importato sia
+dal server sia dall'app. Un rename futuro tocca quel solo file e non i dati.
+
 ## Il ledger
 
 Unico punto in cui il denaro si muove (`services/ledger.ts`, funzione `postEntries`).

@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { AppError, badRequest, conflict, notFound } from '../errors.js';
 import { assertCents, formatCents, type Cents } from '../domain/money.js';
 import type { JarType, Transaction, TransactionType, JarBalances } from '../domain/types.js';
+import { NOMI_JAR } from '../domain/etichette.js';
 import type { Db } from '../db/pool.js';
 
 export interface LedgerEntry {
@@ -33,8 +34,6 @@ export interface LedgerContext {
   occurredAt?: Date;
   clientId?: string | null;
 }
-
-const NOMI_JAR: Record<JarType, string> = { SAVE: 'SAVE', SPEND: 'SPEND', GIVE: 'GIVE' };
 
 export class FondiInsufficientiError extends AppError {
   constructor(jar: JarType, disponibile: Cents, richiesto: Cents) {

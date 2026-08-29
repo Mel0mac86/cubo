@@ -1,9 +1,9 @@
-/** 🟠 GIVE — obiettivi di beneficenza, donazioni fatte e messaggi motivazionali. */
+/** 🟠 Salvadanaio DONO — obiettivi di beneficenza, donazioni e messaggi motivazionali. */
 import { useState } from 'react';
 import { useApp } from '../state/store';
 import { api } from '../lib/api';
 import { Bottone, Campo, CampoEuro, Card, BarraProgresso, Sheet, Vuoto } from '../components/ui';
-import { formatCents, formatDate } from '../lib/format';
+import { formatCents, formatDate, JAR_INFO } from '../lib/format';
 
 const CAUSE: Record<string, { emoji: string; label: string }> = {
   ANIMALI: { emoji: '🐶', label: 'Animali' },
@@ -31,7 +31,7 @@ export function Dona({ chiediGenitore }: { chiediGenitore: (azioneDopo: () => vo
     if (!childId || !obiettivoCents) return;
     const esito = await azione(
       () => api.post(`/children/${childId}/donation-goals`, { title: titolo.trim(), cause: causa, targetCents: obiettivoCents, note: nota || null }),
-      { messaggio: 'Obiettivo GIVE creato ❤️' },
+      { messaggio: `Obiettivo ${JAR_INFO.GIVE.nome} creato ❤️` },
     );
     if (esito !== null) {
       setNuovo(false);
@@ -79,7 +79,7 @@ export function Dona({ chiediGenitore }: { chiediGenitore: (azioneDopo: () => vo
         <div className="riga">
           <span style={{ fontSize: 40 }}>🟠</span>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '.06em' }}>GIVE</div>
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '.06em' }}>{JAR_INFO.GIVE.nome}</div>
             <div style={{ fontSize: 34, fontWeight: 800 }}>{formatCents(stato.jars.GIVE)}</div>
             <div className="piccolo">Donati finora: {formatCents(give.totalDonatedCents)}</div>
           </div>
@@ -185,7 +185,7 @@ export function Dona({ chiediGenitore }: { chiediGenitore: (azioneDopo: () => vo
         <Sheet titolo="Conferma donazione" emoji="🔒" onClose={() => setDonazioneAperta(null)}>
           <div className="stack">
             <div className="avviso">Questa operazione richiede la conferma di un genitore (modalità genitore attiva).</div>
-            <CampoEuro label="Quanto doni?" valoreCents={importoDonazione} onChange={setImportoDonazione} aiuto={`Nel salvadanaio GIVE ci sono ${formatCents(stato.jars.GIVE)}.`} />
+            <CampoEuro label="Quanto doni?" valoreCents={importoDonazione} onChange={setImportoDonazione} aiuto={`Nel salvadanaio ${JAR_INFO.GIVE.nome} ci sono ${formatCents(stato.jars.GIVE)}.`} />
             <Campo label="Vuoi scrivere una nota?">
               <input value={notaDonazione} onChange={(e) => setNotaDonazione(e.target.value)} placeholder="Per i cani del rifugio" maxLength={300} />
             </Campo>

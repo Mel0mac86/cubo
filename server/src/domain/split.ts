@@ -7,6 +7,7 @@
  *  - la ripartizione in centesimi deve ricomporre esattamente l'importo.
  */
 import { allocateByPercent, type Cents } from './money.js';
+import { NOMI_JAR } from './etichette.js';
 import type { Split, JarType } from './types.js';
 
 export class SplitError extends Error {}
@@ -27,7 +28,7 @@ export function validateSplit(split: Split, minGivePercent: number): void {
     throw new SplitError(`Il totale deve essere 100% (adesso è ${totale}%).`);
   }
   if (split.give < minGivePercent) {
-    throw new SplitError(`GIVE non può scendere sotto il ${minGivePercent}% deciso in famiglia.`);
+    throw new SplitError(`${NOMI_JAR.GIVE} non può scendere sotto il ${minGivePercent}% deciso in famiglia.`);
   }
 }
 

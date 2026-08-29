@@ -8,6 +8,7 @@ import type { Cents } from './money.js';
 import { formatCents } from './money.js';
 import { computeGoalProgress, describeWeeks, type GoalProgress, type WeeklyRate } from './goals.js';
 import type { JarType } from './types.js';
+import { NOMI_JAR } from './etichette.js';
 
 export interface SimulationInput {
   amountCents: Cents;
@@ -125,7 +126,7 @@ export function simulatePurchase(input: SimulationInput): SimulationResult {
       impact: deltaWeeks && deltaWeeks > 0 ? 'RITARDO' : 'NESSUN_IMPATTO',
       headline: deltaWeeks && deltaWeeks > 0 ? `${goal.emoji} si allontana di ${settimaneTesto(deltaWeeks)}` : 'Il tuo obiettivo non cambia molto',
       message: deltaWeeks && deltaWeeks > 0
-        ? `Questi soldi stanno nel salvadanaio SAVE, quello del tuo obiettivo. Se compri ${label} per ${formatCents(importo)}, ${goal.name} passa da ${describeWeeks(senza.weeksRemaining)} a ${describeWeeks(con.weeksRemaining)}. Decidi tu!`
+        ? `Questi soldi stanno nel salvadanaio ${NOMI_JAR.SAVE}, quello del tuo obiettivo. Se compri ${label} per ${formatCents(importo)}, ${goal.name} passa da ${describeWeeks(senza.weeksRemaining)} a ${describeWeeks(con.weeksRemaining)}. Decidi tu!`
         : `Se compri ${label} per ${formatCents(importo)}, ${goal.name} resta più o meno alla stessa distanza. Decidi tu!`,
       recuperoWeeks,
       tips,
@@ -148,7 +149,7 @@ export function simulatePurchase(input: SimulationInput): SimulationResult {
   if (opportunitaWeeks && opportunitaWeeks > 0) {
     tips.push(`Se sposti ${formatCents(importo)} in SAVE, ${goal.name} arriva ${settimaneTesto(opportunitaWeeks)} prima.`);
   }
-  tips.push('Soldi in SPEND: sono tuoi, puoi spenderli senza sensi di colpa.');
+  tips.push(`Soldi in ${NOMI_JAR.SPEND}: sono tuoi, puoi spenderli senza sensi di colpa.`);
 
   return {
     amountCents: importo,
@@ -163,13 +164,13 @@ export function simulatePurchase(input: SimulationInput): SimulationResult {
     deltaWeeks: 0,
     opportunitaWeeks,
     impact: opportunitaWeeks && opportunitaWeeks > 0 ? 'COSTO_OPPORTUNITA' : 'NESSUN_IMPATTO',
-    headline: affordable ? 'Puoi farlo!' : 'Ti mancano dei soldi in SPEND',
+    headline: affordable ? 'Puoi farlo!' : `Ti mancano dei soldi in ${NOMI_JAR.SPEND}`,
     message: affordable
-      ? maiuscola(`${label} costa ${formatCents(importo)} ed esce da SPEND, quindi ${goal.name} resta a ${describeWeeks(senza.weeksRemaining)}.`) +
+      ? maiuscola(`${label} costa ${formatCents(importo)} ed esce da ${NOMI_JAR.SPEND}, quindi ${goal.name} resta a ${describeWeeks(senza.weeksRemaining)}.`) +
         (opportunitaWeeks && opportunitaWeeks > 0
-          ? ` Se invece li mettessi in SAVE, ci arriveresti ${settimaneTesto(opportunitaWeeks)} prima. Scegli tu!`
+          ? ` Se invece li mettessi in ${NOMI_JAR.SAVE}, ci arriveresti ${settimaneTesto(opportunitaWeeks)} prima. Scegli tu!`
           : ' Scegli tu!')
-      : `In SPEND hai ${formatCents(input.jarBalanceCents)} e ti servono ${formatCents(importo)}. Potresti fare un lavoretto extra oppure aspettare la prossima paghetta.`,
+      : `In ${NOMI_JAR.SPEND} hai ${formatCents(input.jarBalanceCents)} e ti servono ${formatCents(importo)}. Potresti fare un lavoretto extra oppure aspettare la prossima paghetta.`,
     recuperoWeeks,
     tips,
   };

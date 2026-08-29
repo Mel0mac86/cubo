@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from '../state/store';
 import { api } from '../lib/api';
 import { Card, Vuoto, Bottone } from '../components/ui';
-import { formatCents, formatDayMonth } from '../lib/format';
+import { formatCents, formatDayMonth, JAR_INFO, nomeJar } from '../lib/format';
 
 const FILTRI = [
   { id: 'TUTTO', label: 'Tutto', emoji: '📜' },
@@ -83,7 +83,7 @@ export function Storico() {
                   <div className="testo">
                     <div className="titolo">{v.description}</div>
                     <div className="sotto">
-                      {formatDayMonth(v.occurredAt)} · {v.typeLabel} · {v.jar}
+                      {formatDayMonth(v.occurredAt)} · {v.typeLabel} · {nomeJar(v.jar)}
                       {v.inAttesaDiSincronizzazione && ' · ⏳ da sincronizzare'}
                     </div>
                   </div>
@@ -117,12 +117,12 @@ export function DenaroCresce() {
       ) : (
         <>
           <p className="piccolo morbido">
-            Ogni mese ricevi <span className="grassetto">{i.centsPerEuro} centesimi per ogni euro</span> che resta nel salvadanaio SAVE.
+            Ogni mese ricevi <span className="grassetto">{i.centsPerEuro} centesimi per ogni euro</span> che resta nel salvadanaio {JAR_INFO.SAVE.nome}.
             È un premio per la pazienza!
           </p>
           <div className="confronto">
             <div className="colonna senza">
-              <div className="titolo">Hai in SAVE</div>
+              <div className="titolo">Hai in {JAR_INFO.SAVE.nome}</div>
               <div className="valore" style={{ fontSize: 22 }}>{formatCents(i.preview.baseCents)}</div>
             </div>
             <div className="colonna con">

@@ -7,6 +7,7 @@ import { estimateWeeklySavingRate, computeGoalProgress, weeklyFromAllowance, des
 import { simulatePurchase } from '../src/domain/simulator.js';
 import { computeMonthlyInterest, projectCompound, compareSimpleVsCompound, periodKey } from '../src/domain/interest.js';
 import { levelFromXp, xpForSaving, LEVELS, levelUpHappened } from '../src/domain/xp.js';
+import { NOMI_JAR } from '../src/domain/etichette.js';
 
 describe('Denaro: aritmetica in centesimi', () => {
   it('converte gli euro in centesimi senza errori di virgola mobile', () => {
@@ -80,16 +81,17 @@ describe('Ripartizione: la somma delle parti è sempre il totale', () => {
   });
 });
 
-describe('Regole SAVE / SPEND / GIVE', () => {
+describe('Regole dei tre salvadanai', () => {
   it('accetta solo ripartizioni che fanno 100%', () => {
     expect(() => validateSplit({ save: 60, spend: 30, give: 10 }, 10)).not.toThrow();
     expect(() => validateSplit({ save: 60, spend: 30, give: 5 }, 10)).toThrow(SplitError);
     expect(() => validateSplit({ save: 50, spend: 30, give: 10 }, 10)).toThrow(/100%/);
   });
 
-  it('impedisce a GIVE di scendere sotto la soglia della famiglia', () => {
+  it('impedisce al dono di scendere sotto la soglia della famiglia', () => {
     expect(isValidSplit({ save: 70, spend: 25, give: 5 }, 10)).toBe(false);
     expect(() => validateSplit({ save: 70, spend: 25, give: 5 }, 10)).toThrow(/10%/);
+    expect(() => validateSplit({ save: 70, spend: 25, give: 5 }, 10)).toThrow(new RegExp(NOMI_JAR.GIVE));
     expect(isValidSplit({ save: 70, spend: 20, give: 10 }, 10)).toBe(true);
   });
 

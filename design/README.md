@@ -16,11 +16,11 @@ Si ricrea da questi sorgenti con l'helper della skill `/design`.
 
 ## Due problemi che il confronto ha reso evidenti
 
-1. **I tre salvadanai non entrano nella prima schermata**: oggi GIVE resta sotto la
+1. **I tre salvadanai non entrano nella prima schermata**: oggi DONO resta sotto la
    piega, proprio la parte che il progetto vuole rendere importante.
 2. **Le icone sono emoji di sistema**: cambiano faccia su ogni telefono, non si
    ricolorano e non si allineano. Nelle tre direzioni sono disegnate in SVG.
    Restano emoji solo l'avatar e l'obiettivo, dove sono una scelta del bambino.
 
 I numeri usati nei mockup sono quelli veri del profilo demo di Sofia
-(SAVE 161,30 · SPEND 34,50 · GIVE 13,00 · obiettivo 250,00 · 9 settimane · 704 XP).
+(RISPARMIO 161,30 · SPENDO 34,50 · DONO 13,00 · obiettivo 250,00 · 9 settimane · 704 XP).

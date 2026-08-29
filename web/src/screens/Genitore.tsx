@@ -8,7 +8,7 @@ import { useApp } from '../state/store';
 import { api } from '../lib/api';
 import { Bottone, Campo, CampoEuro, Card, Sheet, Vuoto, BarraProgresso } from '../components/ui';
 import { SplitSliders } from '../components/SplitSliders';
-import { formatCents, formatDayMonth } from '../lib/format';
+import { formatCents, formatDayMonth, JAR_INFO } from '../lib/format';
 import type { Split } from '../lib/split';
 
 export function GateGenitore({ onSbloccato, onChiudi }: { onSbloccato: () => void; onChiudi: () => void }) {
@@ -207,15 +207,15 @@ function SezioneDenaro() {
             <p className="piccolo morbido">Serve per correggere un errore. Ogni movimento resta nello storico.</p>
             <div className="riga">
               <select value={da} onChange={(e) => setDa(e.target.value as never)} style={{ flex: 1, padding: 12, borderRadius: 12, border: '2px solid var(--bordo)' }}>
-                <option value="SAVE">SAVE</option>
-                <option value="SPEND">SPEND</option>
-                <option value="GIVE">GIVE</option>
+                <option value="SAVE">{JAR_INFO.SAVE.nome}</option>
+                <option value="SPEND">{JAR_INFO.SPEND.nome}</option>
+                <option value="GIVE">{JAR_INFO.GIVE.nome}</option>
               </select>
               <span>→</span>
               <select value={a} onChange={(e) => setA(e.target.value as never)} style={{ flex: 1, padding: 12, borderRadius: 12, border: '2px solid var(--bordo)' }}>
-                <option value="SAVE">SAVE</option>
-                <option value="SPEND">SPEND</option>
-                <option value="GIVE">GIVE</option>
+                <option value="SAVE">{JAR_INFO.SAVE.nome}</option>
+                <option value="SPEND">{JAR_INFO.SPEND.nome}</option>
+                <option value="GIVE">{JAR_INFO.GIVE.nome}</option>
               </select>
             </div>
             <CampoEuro label="Importo" valoreCents={importoGiro} onChange={setImportoGiro} />
@@ -404,7 +404,7 @@ function SezioneRegole() {
   const FUNZIONI = [
     { id: 'SPESE', label: 'Registrare spese' },
     { id: 'LAVORI', label: 'Richiedere lavori' },
-    { id: 'DONAZIONI', label: 'Creare obiettivi GIVE' },
+    { id: 'DONAZIONI', label: `Creare obiettivi ${JAR_INFO.GIVE.nome}` },
     { id: 'OBIETTIVI', label: 'Creare obiettivi' },
     { id: 'COACH', label: 'Money Coach' },
   ];
@@ -433,8 +433,8 @@ function SezioneRegole() {
   return (
     <>
       <Card className="stack">
-        <h3>🟠 Regola GIVE</h3>
-        <p className="piccolo morbido">GIVE non può scendere sotto questa percentuale, salvo modifica qui.</p>
+        <h3>🟠 Regola {JAR_INFO.GIVE.nome}</h3>
+        <p className="piccolo morbido">{JAR_INFO.GIVE.nome} non può scendere sotto questa percentuale, salvo modifica qui.</p>
         <div className="riga">
           <input type="range" min={0} max={50} step={5} value={minGive} onChange={(e) => setMinGive(Number(e.target.value))} className="slider-give" style={{ flex: 1 }} />
           <span className="grassetto" style={{ minWidth: 52, textAlign: 'right' }}>{minGive}%</span>
