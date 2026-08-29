@@ -3,14 +3,24 @@
   "short_name": "Money Adventure",
   "description": "Impara a gestire la paghetta con i tre salvadanai SAVE, SPEND e GIVE.",
   "lang": "it",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#F5F3FF",
+  "background_color": "#5B3DF5",
   "theme_color": "#5B3DF5",
+  "categories": ["education", "finance", "kids"],
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Ho speso", "short_name": "Spesa", "url": "/?vai=spendi" },
+    { "name": "Guadagna", "short_name": "Guadagna", "url": "/?vai=guadagna" }
   ]
 }

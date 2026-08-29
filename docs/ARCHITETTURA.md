@@ -149,6 +149,23 @@ mese non può essere accreditato due volte, nemmeno per un doppio clic.
 Un'operazione non valida (per esempio una spesa che nel frattempo non è più
 copribile) viene segnalata al client **senza bloccare le altre**.
 
+## Installazione sul telefono (PWA)
+
+Il manifest dichiara `display: standalone`, icone PNG a 192/512 px e una icona
+`maskable` per Android. iOS però non legge il manifest per la schermata Home: usa
+`apple-touch-icon` (PNG 180×180), `apple-mobile-web-app-capable`,
+`apple-mobile-web-app-title` e le `apple-touch-startup-image` con media query per
+device — tutto in `web/index.html`, generato da `web/scripts/genera-icone.mjs`.
+
+Non esistendo `beforeinstallprompt` su iOS, `web/src/components/Installa.tsx` mostra i
+passaggi del menu Condividi; su Android/desktop intercetta invece il prompt nativo.
+Il rilevamento di app già installata usa `display-mode: standalone` **e**
+`navigator.standalone` (l'unico segnale disponibile su iOS).
+
+In produzione l'API serve anche `web/dist`: un solo origin, così l'app è raggiungibile
+dal telefono sulla rete locale senza CORS né proxy, e le rotte della SPA rispondono
+con `index.html` mentre `/api/*` continua a restituire i suoi 404 in JSON.
+
 ## Modalità genitore
 
 ```

@@ -7,11 +7,26 @@
  * - le chiamate di scrittura NON vengono mai messe in cache: quando la rete
  *   manca l'app le accoda in locale e le rimanda con /sync.
  */
-const VERSIONE = 'mma-v1';
-const GUSCIO = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg'];
+const VERSIONE = 'mma-v2';
+const GUSCIO = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/icon.svg',
+  '/apple-touch-icon.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/favicon-32.png',
+];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(VERSIONE).then((c) => c.addAll(GUSCIO)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches
+      .open(VERSIONE)
+      // addAll fallisce in blocco se anche un solo file manca: meglio uno alla volta
+      .then((c) => Promise.all(GUSCIO.map((url) => c.add(url).catch(() => undefined))))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (event) => {

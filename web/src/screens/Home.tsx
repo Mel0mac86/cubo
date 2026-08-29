@@ -7,6 +7,7 @@ import { SplitSliders } from '../components/SplitSliders';
 import { formatCents, formatDayMonth, settimaneTesto, formatDate, formatPercent } from '../lib/format';
 import { splitValido, type Split } from '../lib/split';
 import { monetineVerso } from '../lib/celebrate';
+import { SuggerimentoInstallazione } from '../components/Installa';
 
 export function Home({ vaiA }: { vaiA: (schermata: string, dati?: unknown) => void }) {
   const { stato, childId, azione } = useApp();
@@ -187,6 +188,8 @@ export function Home({ vaiA }: { vaiA: (schermata: string, dati?: unknown) => vo
           </div>
         </Card>
       )}
+
+      <SuggerimentoInstallazione />
 
       {/* --------------------------------------------- SHEET: DIVIDI SOLDI */}
       {entrataAperta && (

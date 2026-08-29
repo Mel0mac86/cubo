@@ -1,5 +1,8 @@
 /** Profilo del bambino: avatar, livello, badge e uscita. */
+import { useState } from 'react';
 import { useApp } from '../state/store';
+import { IstruzioniIPhone } from '../components/Installa';
+import { rilevaPiattaforma } from '../lib/installa';
 import { Bottone, Sheet, BarraProgresso, Card } from '../components/ui';
 import { api } from '../lib/api';
 import { formatCents } from '../lib/format';
@@ -8,6 +11,8 @@ const AVATAR = ['🦄', '🦊', '🐼', '🐯', '🐸', '🦁', '🐨', '🐧', 
 
 export function Profilo({ onChiudi }: { onChiudi: () => void }) {
   const { stato, childId, azione, esci } = useApp();
+  const [istruzioni, setIstruzioni] = useState(false);
+  const [piattaforma] = useState(rilevaPiattaforma);
   if (!stato) return null;
   const { child, achievements, streak } = stato;
 
@@ -76,9 +81,19 @@ export function Profilo({ onChiudi }: { onChiudi: () => void }) {
           </div>
         )}
 
+        {piattaforma.installata ? (
+          <div className="avviso calmo centrato">📲 Stai usando l’app dalla schermata Home. Perfetto!</div>
+        ) : (
+          <Bottone variante="secondario" onClick={() => setIstruzioni(true)}>
+            📲 Metti l’app sulla schermata Home
+          </Bottone>
+        )}
+
         <Bottone variante="fantasma" onClick={() => { esci(); onChiudi(); }}>
           Esci dall’account
         </Bottone>
+
+        {istruzioni && <IstruzioniIPhone onChiudi={() => setIstruzioni(false)} />}
       </div>
     </Sheet>
   );

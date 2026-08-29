@@ -78,6 +78,57 @@ npm start         # avvia l'API compilata
 
 ---
 
+## 📲 Metterla sull'iPhone («Aggiungi alla schermata Home»)
+
+Su iPhone non esiste un pulsante «installa»: l'app si aggiunge dal menu **Condividi**
+di Safari. L'app lo spiega da sola con un riquadro in fondo alla home, e le istruzioni
+restano sempre nel **profilo** (tocca l'avatar in alto a sinistra).
+
+### 1. Avvia l'app in modo che il telefono la veda
+
+```bash
+npm run build
+npm start
+```
+
+Il server API serve anche il frontend compilato: **un solo indirizzo, una sola porta**,
+niente proxy. All'avvio stampa l'indirizzo da usare sul telefono:
+
+```
+🪙  My Money Adventure — http://localhost:4000
+📱  Dal telefono (stessa Wi-Fi): http://192.168.1.42:4000
+```
+
+### 2. Sull'iPhone
+
+1. Collega il telefono alla **stessa rete Wi-Fi** del computer.
+2. Apri **Safari** e vai all'indirizzo `http://192.168.1.42:4000` (il tuo).
+3. Tocca **Condividi** (il quadrato con la freccia verso l'alto, in basso).
+4. Scorri e tocca **Aggiungi alla schermata Home**.
+5. Tocca **Aggiungi**.
+
+Sulla home compare l'icona **Money Adventure**. Aperta da lì, l'app parte a tutto
+schermo — senza barra degli indirizzi, con la sua schermata di avvio — e si comporta
+come un'app installata.
+
+### Cosa sapere
+
+- **Serve il PNG, non l'SVG.** Safari ignora le icone del manifest e le icone SVG per
+  la schermata Home: l'icona vera è `web/public/apple-touch-icon.png` (180×180),
+  dichiarata in `index.html`. Senza di essa iOS metterebbe sulla home una miniatura
+  della pagina. Icone e schermate di avvio si rigenerano con
+  `npm --workspace web run icone` (sorgente: `web/scripts/genera-icone.mjs`).
+- **Memoria separata.** L'app aperta dall'icona ha uno spazio dati suo, distinto da
+  Safari: la prima volta va rifatto l'accesso con la password di famiglia.
+- **Offline.** La coda delle operazioni fatte senza rete funziona sempre. La cache dei
+  file dell'app (il service worker) si attiva però solo in **contesto sicuro**: su
+  `localhost` o in **HTTPS**. Su `http://192.168.…` l'app funziona normalmente, ma per
+  l'avvio completamente offline va pubblicata dietro HTTPS.
+- **Android e desktop.** Lì il browser offre l'installazione vera e propria: il riquadro
+  mostra direttamente il pulsante «Installa l'app».
+
+---
+
 ## Come funziona il denaro
 
 **Nessun importo è mai un numero a virgola mobile.** Tutti i saldi sono interi in

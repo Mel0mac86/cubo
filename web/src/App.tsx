@@ -17,6 +17,8 @@ import { AreaToast } from './components/ui';
 
 type Schermata = 'casa' | 'obiettivi' | 'spendi' | 'guadagna' | 'dona' | 'storico' | 'impara' | 'coach' | 'genitore';
 
+const NAV_VALIDE: Schermata[] = ['casa', 'obiettivi', 'spendi', 'guadagna', 'dona', 'storico', 'impara', 'coach'];
+
 const NAV: { id: Schermata; ico: string; label: string }[] = [
   { id: 'casa', ico: '🏠', label: 'Casa' },
   { id: 'guadagna', ico: '💰', label: 'Guadagna' },
@@ -37,6 +39,15 @@ export default function App() {
     const gestisci = () => setSchermata('casa');
     window.addEventListener('popstate', gestisci);
     return () => window.removeEventListener('popstate', gestisci);
+  }, []);
+
+  // Scorciatoie dell'icona sulla schermata Home (manifest "shortcuts"): /?vai=spendi
+  useEffect(() => {
+    const richiesta = new URLSearchParams(window.location.search).get('vai');
+    if (richiesta && NAV_VALIDE.includes(richiesta as Schermata)) {
+      setSchermata(richiesta as Schermata);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   if (!pronto) {
