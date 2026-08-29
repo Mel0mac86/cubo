@@ -14,8 +14,22 @@ pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
 });
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => Number(value));
 
+/**
+ * I database gestiti (Render, Railway, Heroku, Neon...) richiedono TLS e
+ * presentano certificati firmati da una CA interna. Si attiva TLS quando la
+ * stringa di connessione lo richiede, senza pretendere una catena verificabile.
+ * Con PGSSL_STRICT=true si torna alla verifica completa (serve una CA valida).
+ */
+function opzioniSsl(url: string): pg.PoolConfig['ssl'] {
+  if (process.env.PGSSLMODE === 'disable') return undefined;
+  const richiesto = /sslmode=(require|verify-ca|verify-full)/.test(url) || process.env.PGSSL === 'true';
+  if (!richiesto) return undefined;
+  return process.env.PGSSL_STRICT === 'true' ? true : { rejectUnauthorized: false };
+}
+
 export const pool = new pg.Pool({
   connectionString: config.databaseUrl,
+  ssl: opzioniSsl(config.databaseUrl),
   max: Number(process.env.PG_POOL_MAX ?? 10),
   idleTimeoutMillis: 30_000,
 });

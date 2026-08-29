@@ -16,7 +16,11 @@ import { CAUSE_INFO } from './services/donations.js';
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
-  app.use(cors({ origin: config.corsOrigin === '*' ? true : config.corsOrigin.split(',') }));
+  // "same-origin" (o "none"): frontend e API stanno sullo stesso indirizzo,
+  // quindi nessuna origine esterna va autorizzata. È il caso della produzione.
+  if (!['same-origin', 'none'].includes(config.corsOrigin)) {
+    app.use(cors({ origin: config.corsOrigin === '*' ? true : config.corsOrigin.split(',') }));
+  }
   // Le immagini degli obiettivi arrivano come data URL: serve un limite generoso.
   app.use(express.json({ limit: '6mb' }));
 

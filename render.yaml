@@ -1,0 +1,69 @@
+# =====================================================================
+#  My Money Adventure — Blueprint per Render (https://render.com)
+#
+#  Crea due risorse collegate:
+#   1. un database PostgreSQL gestito;
+#   2. un servizio web che compila l'app e la serve (API + frontend insieme,
+#      quindi un solo indirizzo HTTPS da aprire su Safari).
+#
+#  Istruzioni passo passo: docs/DEPLOY.md
+# =====================================================================
+
+databases:
+  - name: money-adventure-db
+    plan: free
+    region: frankfurt          # il più vicino all'Italia
+    databaseName: money_adventure
+    user: money_adventure
+
+services:
+  - type: web
+    name: money-adventure
+    runtime: node
+    plan: free
+    region: frankfurt
+    # Le migrazioni girano da sole all'avvio (server/src/index.ts): non serve
+    # un passaggio separato.
+    # --include=dev è necessario: TypeScript e Vite servono per compilare.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+
+      # Collegamento automatico al database qui sopra
+      - key: DATABASE_URL
+        fromDatabase:
+          name: money-adventure-db
+          property: connectionString
+
+      # Segreto per firmare le sessioni: lo genera Render, non lo vede nessuno
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Frontend e API stanno sullo stesso indirizzo: nessuna richiesta
+      # cross-origin va permessa.
+      - key: CORS_ORIGIN
+        value: same-origin
+
+      # Durata della modalità genitore sbloccata con il PIN (minuti)
+      - key: PARENT_SESSION_MINUTES
+        value: "30"
+
+      # Il profilo demo di Sofia viene creato su richiesta dal pulsante
+      # "Prova la demo": non serve crearlo all'avvio.
+      - key: SEED_ON_BOOT
+        value: "false"
+
+      # Facoltativa: senza chiave il Money Coach usa il motore deterministico.
+      # "sync: false" significa: la inserisci a mano nel pannello di Render,
+      # non finisce mai dentro il repository.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5

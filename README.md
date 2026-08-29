@@ -84,7 +84,16 @@ Su iPhone non esiste un pulsante «installa»: l'app si aggiunge dal menu **Cond
 di Safari. L'app lo spiega da sola con un riquadro in fondo alla home, e le istruzioni
 restano sempre nel **profilo** (tocca l'avatar in alto a sinistra).
 
-### 1. Avvia l'app in modo che il telefono la veda
+### Opzione A — pubblicata online (link HTTPS, funziona ovunque)
+
+Segui [`docs/DEPLOY.md`](docs/DEPLOY.md): con il file [`render.yaml`](render.yaml) già
+pronto, Render crea database e app in pochi minuti e ti dà un indirizzo tipo
+`https://money-adventure.onrender.com`. È l'unico modo per avere anche l'**avvio
+completamente offline**, che richiede HTTPS.
+
+### Opzione B — sulla rete di casa
+
+#### 1. Avvia l'app in modo che il telefono la veda
 
 ```bash
 npm run build
@@ -99,7 +108,7 @@ niente proxy. All'avvio stampa l'indirizzo da usare sul telefono:
 📱  Dal telefono (stessa Wi-Fi): http://192.168.1.42:4000
 ```
 
-### 2. Sull'iPhone
+#### 2. Sull'iPhone
 
 1. Collega il telefono alla **stessa rete Wi-Fi** del computer.
 2. Apri **Safari** e vai all'indirizzo `http://192.168.1.42:4000` (il tuo).
@@ -113,6 +122,9 @@ come un'app installata.
 
 ### Cosa sapere
 
+- **GitHub non basta.** Il link al repository mostra il codice, non esegue l'app:
+  servono un server Node e un database PostgreSQL attivi. Per un link apribile da
+  Safari usa l'opzione A.
 - **Serve il PNG, non l'SVG.** Safari ignora le icone del manifest e le icone SVG per
   la schermata Home: l'icona vera è `web/public/apple-touch-icon.png` (180×180),
   dichiarata in `index.html`. Senza di essa iOS metterebbe sulla home una miniatura
@@ -251,6 +263,7 @@ web/
 
 Documentazione tecnica estesa: [`docs/ARCHITETTURA.md`](docs/ARCHITETTURA.md).
 Elenco completo delle API: [`docs/API.md`](docs/API.md).
+Pubblicazione online: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ---
 
