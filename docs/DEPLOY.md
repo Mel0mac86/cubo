@@ -17,60 +17,63 @@ Se hai solo l'iPhone e vuoi l'app per un bambino, **GitHub Pages basta e avanza*
 
 # A. GitHub Pages (nessun computer)
 
-L'app è già compilata dentro la cartella `docs/` di questo branch, in una versione
+L'app compilata vive in un repository dedicato,
+[`Mel0mac86/soldibimbi`](https://github.com/Mel0mac86/soldibimbi), in una versione
 che funziona **interamente dentro il telefono**: stesse regole, stessi calcoli,
 stesse schermate, ma senza server né database.
 
+Perché un repository a parte: `mel0mac86.github.io/cubo` ospita già un'altra app,
+e un sito GitHub Pages per repository può pubblicare una cosa sola. Tenere separati
+codice e sito pubblicato evita anche di mettere online sorgenti e test.
+
 ## 1. Accendi GitHub Pages (una volta sola, dal telefono)
 
-1. Apri il repository su **github.com** in Safari.
-2. Tocca **Settings** (l'ingranaggio; se non lo vedi, apri il menu «···»).
-3. Nel menu di sinistra tocca **Pages**.
-4. Alla voce **Source** scegli **Deploy from a branch**.
-5. Come **Branch** scegli `claude/money-adventure-app-pvgu3r`, come cartella **`/docs`**.
-6. Tocca **Save**.
+1. Apri **https://github.com/Mel0mac86/soldibimbi/settings/pages** in Safari.
+2. Alla voce **Source** scegli **Deploy from a branch**.
+3. **Branch**: `main`, cartella **`/ (root)`**.
+4. Tocca **Save**.
 
 Dopo circa un minuto, in cima alla stessa pagina compare il link:
 
 ```
-https://mel0mac86.github.io/cubo/
+https://mel0mac86.github.io/soldibimbi/
 ```
 
 ## 2. Metti l'app sulla schermata Home
 
 1. Apri quel link in **Safari**.
-2. Tocca **Condividi** → **Aggiungi alla schermata Home** → **Aggiungi**.
-3. Apri l'app dall'icona: parte a tutto schermo, con la sua schermata di avvio.
+2. Tocca **Condividi** (il quadrato con la freccia verso l'alto, in basso).
+3. Scorri e tocca **Aggiungi alla schermata Home**.
+4. Tocca **Aggiungi**.
 
-Al primo avvio puoi creare la tua famiglia oppure premere **«Prova la demo di
-Sofia»** per guardarti intorno.
+Aperta dall'icona, l'app parte a tutto schermo — senza barra degli indirizzi, con
+la sua schermata di avvio.
 
-## 3. Cose da sapere su questa versione
+## 3. Cosa sapere su questa versione
 
 - **I dati stanno solo su quel telefono.** Non passano da nessun server: nessuno
   può vederli, ma non si sincronizzano nemmeno con altri dispositivi.
 - **Fai un backup ogni tanto.** Profilo (avatar in alto a sinistra) → **Dati e
-  backup** → *Salva un backup*: viene creato un file da tenere in File o su
-  iCloud. Se Safari cancella i dati dei siti, o si toglie l'app dalla schermata
-  Home, senza backup i movimenti registrati si perdono.
+  backup** → *Salva un backup*. Se Safari cancella i dati dei siti, o si toglie
+  l'app dalla schermata Home, senza backup i movimenti registrati si perdono.
 - **La modalità genitore resta protetta dal PIN**, esattamente come nella versione
-  con server: la password di famiglia e il PIN sono salvati cifrati (PBKDF2), non
-  in chiaro.
+  con server: password di famiglia e PIN sono salvati cifrati (PBKDF2), non in chiaro.
 - **Il Money Coach funziona senza AI**: usa il motore deterministico, che fa
   comunque tutti i calcoli e le simulazioni. Una chiave API dentro un sito statico
   sarebbe leggibile da chiunque, quindi non c'è.
 
 ## 4. Aggiornare l'app pubblicata
 
-Chi ha un computer rigenera la cartella con:
+Chi ha un computer, dal repository del codice:
 
 ```bash
-npm run build:pages   # compila la versione locale e la copia in docs/
-git add docs && git commit -m "Aggiorna l'app pubblicata" && git push
+npm run build:pages     # compila e copia in ../soldibimbi
+cd ../soldibimbi && git add -A && git commit -m "Aggiorna l'app" && git push
 ```
 
-GitHub Pages ripubblica da solo in un minuto. Sul telefono la nuova versione
-arriva alla riapertura successiva.
+GitHub Pages ripubblica da solo in un minuto. Sul telefono la nuova versione arriva
+alla riapertura successiva. Con `--dest` si pubblica in un'altra cartella:
+`node scripts/pubblica-pages.mjs --dest /percorso/altro-repo`.
 
 ---
 

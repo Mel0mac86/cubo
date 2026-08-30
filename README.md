@@ -86,11 +86,13 @@ restano sempre nel **profilo** (tocca l'avatar in alto a sinistra).
 
 ### Opzione A — GitHub Pages (nessun computer, gratis)
 
-L'app è già compilata in [`docs/`](docs/) in una versione che gira **interamente
-dentro il telefono**: niente server, niente database. Basta accendere GitHub Pages
-una volta (Settings → Pages → *Deploy from a branch* → questo branch → `/docs`) e
-si ottiene un link tipo `https://mel0mac86.github.io/cubo/` da aprire in Safari e
-aggiungere alla schermata Home.
+L'app compilata vive nel repository dedicato
+[`Mel0mac86/soldibimbi`](https://github.com/Mel0mac86/soldibimbi), in una versione
+che gira **interamente dentro il telefono**: niente server, niente database. Basta
+accendere GitHub Pages una volta (Settings → Pages → *Deploy from a branch* →
+`main` → `/ (root)`) e si ottiene il link
+**https://mel0mac86.github.io/soldibimbi/** da aprire in Safari e aggiungere alla
+schermata Home.
 
 Passaggi completi e limiti di questa versione: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
@@ -169,7 +171,8 @@ grande, previsioni, interesse composto, XP: un'unica fonte di verità, testata u
 volta sola.
 
 La modalità locale si attiva compilando con `VITE_MODALITA=locale`
-(`npm run build:pages`) ed è quella pubblicata su GitHub Pages.
+(`npm run build:pages`): la build finisce nel repository `soldibimbi`, che è quello
+pubblicato su GitHub Pages.
 
 ---
 

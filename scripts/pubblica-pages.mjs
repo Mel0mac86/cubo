@@ -1,23 +1,29 @@
 /**
- * Copia l'app compilata dentro docs/, la cartella che GitHub Pages può servire
- * direttamente da questo branch ("Deploy from a branch" → /docs).
+ * Copia l'app compilata nella cartella che GitHub Pages pubblica.
+ *
+ * La destinazione si passa con --dest (predefinita: ../soldibimbi, il
+ * repository dedicato alla versione online). Il repository del codice resta
+ * separato da quello pubblicato: così il sito non porta con sé sorgenti,
+ * test e documentazione.
  *
  * La build in modalità locale finisce in web/dist-locale, tenuta separata da
  * web/dist: quest'ultima è la versione con server, servita dall'API.
  *
- * Perché docs/ e non un branch separato: così si pubblica senza dover unire
- * nulla e senza toccare altri branch — utile quando si lavora dal telefono.
- *
- * I file della documentazione (i .md) restano dove sono: lo script rimuove solo
- * quello che aveva generato la volta prima, elencato in docs/.generato.json.
+ * I file già presenti nella destinazione (il README, per esempio) restano dove
+ * sono: lo script rimuove solo quello che aveva generato la volta prima,
+ * elencato in .generato.json.
  */
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const radice = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sorgente = join(radice, 'web', 'dist-locale');
-const destinazione = join(radice, 'docs');
+const argomenti = process.argv.slice(2);
+const indiceDest = argomenti.indexOf('--dest');
+const destinazione = indiceDest >= 0 && argomenti[indiceDest + 1]
+  ? resolve(argomenti[indiceDest + 1])
+  : join(radice, '..', 'soldibimbi');
 const elenco = join(destinazione, '.generato.json');
 
 if (!existsSync(join(sorgente, 'index.html'))) {
@@ -47,5 +53,5 @@ generati.push('.nojekyll');
 writeFileSync(elenco, JSON.stringify(generati.sort(), null, 2) + '\n');
 generati.push('.generato.json');
 
-console.log(`✅ App pubblicata in docs/ (${generati.length} elementi)`);
-console.log('   Su GitHub: Settings → Pages → Deploy from a branch → questo branch → /docs');
+console.log(`✅ App pubblicata in ${destinazione} (${generati.length} elementi)`);
+console.log('   Su GitHub: Settings → Pages → Deploy from a branch → main → / (root)');
