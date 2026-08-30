@@ -28,7 +28,7 @@ const NAV: { id: Schermata; ico: string; label: string }[] = [
 ];
 
 export default function App() {
-  const { pronto, sessione, stato, toasts, online, inCoda, modalitaGenitore } = useApp();
+  const { pronto, sessione, stato, childId, esci, toasts, online, inCoda, modalitaGenitore } = useApp();
   const [schermata, setSchermata] = useState<Schermata>('casa');
   const [profiloAperto, setProfiloAperto] = useState(false);
   const [gateAperto, setGateAperto] = useState(false);
@@ -60,6 +60,26 @@ export default function App() {
   }
 
   if (!sessione) return <Accesso />;
+
+  // Senza un profilo bambino non c'è niente da caricare: meglio dirlo che
+  // lasciare girare all'infinito la schermata di attesa.
+  if (!childId) {
+    return (
+      <div className="schermata-accesso centrato stack">
+        <div className="logo-grande">🫙</div>
+        <h2>Manca il profilo del bambino</h2>
+        <p className="morbido">
+          La famiglia è stata creata, ma senza nessun bambino a cui collegare i salvadanai.
+        </p>
+        <button className="btn primario" onClick={() => window.location.reload()}>
+          Riprova
+        </button>
+        <button className="btn fantasma" onClick={esci}>
+          Esci e ricomincia
+        </button>
+      </div>
+    );
+  }
 
   if (!stato) {
     return (

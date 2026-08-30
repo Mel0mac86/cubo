@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useApp } from '../state/store';
 import { api } from '../lib/api';
+import { NOME_BAMBINO_PROVVISORIO } from '@dominio/etichette.js';
 import { Bottone, Campo, CampoEuro, SceltaEmoji } from '../components/ui';
 import { SplitSliders } from '../components/SplitSliders';
 import { lanciaConfetti, suonaTono } from '../lib/celebrate';
@@ -23,7 +24,10 @@ export function Onboarding() {
   const minGive = stato?.child?.settings?.minGivePercent ?? 10;
 
   const [passo, setPasso] = useState(0);
-  const [nome, setNome] = useState(stato?.child?.name ?? '');
+  // Il segnaposto messo alla registrazione non va precompilato: il bambino
+  // deve trovare il campo vuoto e scrivere il suo nome.
+  const nomeIniziale = stato?.child?.name === NOME_BAMBINO_PROVVISORIO ? '' : stato?.child?.name ?? '';
+  const [nome, setNome] = useState(nomeIniziale);
   const [eta, setEta] = useState(String(stato?.child?.age ?? 9));
   const [avatar, setAvatar] = useState(stato?.child?.avatar ?? '🦄');
   const [colore, setColore] = useState(stato?.child?.avatarColor ?? '#7C5CFF');

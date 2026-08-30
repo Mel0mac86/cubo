@@ -20,6 +20,7 @@ import { compareSimpleVsCompound, projectCompound } from '@dominio/interest.js';
 import { buildDeterministicAnswer, SUGGERIMENTI } from '@dominio/coach.js';
 import { getLesson } from '@contenuti/lessons.js';
 import { DONATION_CAUSES, HISTORY_FILTERS, type DonationCause, type HistoryFilter, type Split } from '@dominio/types.js';
+import { NOME_BAMBINO_PROVVISORIO } from '@dominio/etichette.js';
 import {
   derivaHash, leggiArchivio, modifica, nuovoId, nuovoSale, verificaSegreto,
   type Archivio, type BambinoLocale,
@@ -98,6 +99,17 @@ function bambiniDi(a: Archivio) {
   return a.bambini.map((b) => ({ ...b }));
 }
 
+/**
+ * Una famiglia senza nemmeno un profilo bambino non ha niente da mostrare:
+ * l'app resterebbe ferma sulla schermata di caricamento. Qui se ne garantisce
+ * sempre almeno uno, creandolo al volo per le famiglie registrate prima di
+ * questa correzione.
+ */
+function assicuraBambino(a: Archivio): void {
+  if (a.bambini.length > 0 || !a.famiglia) return;
+  creaBambino(a, a.famiglia.id, { name: NOME_BAMBINO_PROVVISORIO });
+}
+
 interface Contesto {
   metodo: string;
   percorso: string;
@@ -161,8 +173,12 @@ async function instrada(ctx: Contesto): Promise<unknown> {
         email: (corpo.email ?? '').trim().toLowerCase(),
         passwordHash, passwordSalt: sale, pinHash, pinSalt: salePin,
       };
-      const b = corpo.childName ? creaBambino(a, familyId, { name: corpo.childName, age: corpo.childAge ?? null }) : null;
-      return { token: nuovoId(), family: { id: familyId, name: a.famiglia.nome }, children: b ? [b] : [] };
+      // Sempre un profilo: senza, l'app non avrebbe niente da caricare.
+      const b = creaBambino(a, familyId, {
+        name: corpo.childName ?? NOME_BAMBINO_PROVVISORIO,
+        age: corpo.childAge ?? null,
+      });
+      return { token: nuovoId(), family: { id: familyId, name: a.famiglia.nome }, children: [b] };
     });
   }
 
@@ -174,7 +190,11 @@ async function instrada(ctx: Contesto): Promise<unknown> {
     if (!emailOk || !(await verificaSegreto(corpo.password ?? '', f.passwordSalt, f.passwordHash))) {
       throw new ErroreLocale(401, 'NON_AUTENTICATO', 'Email o password non corretti.');
     }
-    return { token: nuovoId(), family: { id: f.id, name: f.nome }, children: bambiniDi(a) };
+    const bambini = modifica((archivio) => {
+      assicuraBambino(archivio);
+      return bambiniDi(archivio);
+    });
+    return { token: nuovoId(), family: { id: f.id, name: f.nome }, children: bambini };
   }
 
   if (metodo === 'POST' && (p = combacia(percorso, '/auth/demo'))) {
@@ -211,9 +231,12 @@ async function instrada(ctx: Contesto): Promise<unknown> {
   }
 
   if (metodo === 'GET' && (p = combacia(percorso, '/auth/me'))) {
-    const a = leggiArchivio();
-    const f = esigiFamiglia(a);
-    return { family: { id: f.id, name: f.nome }, children: bambiniDi(a), scope: 'family', parentMode: !!permessoGenitore };
+    const f = esigiFamiglia(leggiArchivio());
+    const bambini = modifica((archivio) => {
+      assicuraBambino(archivio);
+      return bambiniDi(archivio);
+    });
+    return { family: { id: f.id, name: f.nome }, children: bambini, scope: 'family', parentMode: !!permessoGenitore };
   }
 
   // ------------------------------------------------------------------ BAMBINO

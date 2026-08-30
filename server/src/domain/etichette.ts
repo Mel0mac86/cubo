@@ -19,6 +19,14 @@ export const NOMI_JAR: Record<JarType, string> = {
   GIVE: 'DONO',
 };
 
+/**
+ * Nome dato al profilo del bambino quando il genitore non lo indica alla
+ * registrazione. È provvisorio: la prima schermata dell'app chiede "Come ti
+ * chiami?" e lo sostituisce. Serve perché una famiglia senza nemmeno un
+ * profilo non ha niente da mostrare.
+ */
+export const NOME_BAMBINO_PROVVISORIO = 'Bambino';
+
 /** Una riga di spiegazione per ciascun salvadanaio. */
 export const DESCRIZIONI_JAR: Record<JarType, string> = {
   SAVE: 'I soldi per il tuo obiettivo',

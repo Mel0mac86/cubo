@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { richiestaLocale } from './motore';
-import { azzeraArchivio, esportaBackup, importaBackup, leggiArchivio } from './archivio';
+import { azzeraArchivio, esportaBackup, importaBackup, leggiArchivio, modifica as modificaArchivio } from './archivio';
 import { NOMI_JAR } from '@dominio/etichette.js';
 
 const REGISTRAZIONE = {
@@ -56,6 +56,36 @@ describe('Accesso e protezione della modalità genitore', () => {
     await expect(richiestaLocale('POST', '/auth/login', { email: REGISTRAZIONE.email, password: 'sbagliata' })).rejects.toThrow();
     const ok = await richiestaLocale<any>('POST', '/auth/login', { email: REGISTRAZIONE.email, password: REGISTRAZIONE.password });
     expect(ok.children).toHaveLength(1);
+  });
+
+  it('la registrazione crea sempre un profilo bambino, anche senza nome', async () => {
+    // Senza profilo l'app resterebbe ferma sulla schermata di caricamento.
+    azzeraArchivio();
+    const r = await richiestaLocale<any>('POST', '/auth/register', {
+      familyName: 'Famiglia Rossi', parentName: 'Papà',
+      email: 'rossi@email.it', password: 'password-sicura', pin: '4321',
+    });
+    expect(r.children).toHaveLength(1);
+    const stato = await richiestaLocale<any>('GET', `/children/${r.children[0].id}/state`);
+    expect(stato.child.onboardingCompleted).toBe(false);
+    expect(stato.jars.totalCents).toBe(0);
+  });
+
+  it('ripara una famiglia rimasta senza bambino', async () => {
+    // Le famiglie create prima della correzione non devono restare bloccate.
+    azzeraArchivio();
+    await richiestaLocale('POST', '/auth/register', {
+      familyName: 'Famiglia Rossi', parentName: 'Papà',
+      email: 'rossi@email.it', password: 'password-sicura', pin: '4321',
+    });
+    modificaArchivio((a) => { a.bambini = []; a.salvadanai = {}; });
+    expect(leggiArchivio().bambini).toHaveLength(0);
+
+    const login = await richiestaLocale<any>('POST', '/auth/login', { email: 'rossi@email.it', password: 'password-sicura' });
+    expect(login.children).toHaveLength(1);
+
+    const me = await richiestaLocale<any>('GET', '/auth/me');
+    expect(me.children).toHaveLength(1);
   });
 
   it('password e PIN non restano in chiaro nei dati salvati', () => {

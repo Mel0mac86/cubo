@@ -77,6 +77,31 @@ describe('Autenticazione e sicurezza', () => {
     expect(r.status).toBe(404);
   });
 
+  it('la registrazione crea sempre un profilo bambino, anche senza nome', async () => {
+    // Senza profilo l'app resterebbe ferma sulla schermata di caricamento.
+    await pool.query('TRUNCATE families RESTART IDENTITY CASCADE');
+    const { childName, childAge, ...senzaBambino } = REGISTRAZIONE;
+    const r = await request(app).post('/api/auth/register').send(senzaBambino);
+    expect(r.status).toBe(201);
+    expect(r.body.children).toHaveLength(1);
+
+    const stato = await request(app)
+      .get(`/api/children/${r.body.children[0].id}/state`)
+      .set('Authorization', `Bearer ${r.body.token}`);
+    expect(stato.status).toBe(200);
+    expect(stato.body.child.onboardingCompleted).toBe(false);
+  });
+
+  it('ripara una famiglia rimasta senza bambino', async () => {
+    // Le famiglie create prima della correzione non devono restare bloccate.
+    await pool.query('DELETE FROM children WHERE id = $1', [childId]);
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: REGISTRAZIONE.email, password: REGISTRAZIONE.password });
+    expect(login.status).toBe(200);
+    expect(login.body.children).toHaveLength(1);
+  });
+
   it('rifiuta una registrazione con email già usata', async () => {
     const r = await request(app).post('/api/auth/register').send(REGISTRAZIONE);
     expect(r.status).toBe(409);

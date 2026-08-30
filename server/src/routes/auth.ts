@@ -7,6 +7,21 @@ import { signToken, signParentToken, verifySecret } from '../auth/tokens.js';
 import { requireAuth } from '../middleware/auth.js';
 import { unauthorized, badRequest, notFound } from '../errors.js';
 import { seedDemoFamily, DEMO_EMAIL, DEMO_PASSWORD, DEMO_PIN } from '../seed/demo.js';
+import { NOME_BAMBINO_PROVVISORIO } from '../domain/etichette.js';
+import { withTransaction as inTransazione } from '../db/pool.js';
+
+/**
+ * Una famiglia senza nemmeno un profilo bambino non ha niente da mostrare:
+ * l'app resterebbe ferma sulla schermata di caricamento. Qui si garantisce che
+ * ce ne sia sempre almeno uno, creandolo al volo per le famiglie registrate
+ * prima di questa correzione.
+ */
+async function assicuraBambino(familyId: string) {
+  const bambini = await listChildrenOfFamily(pool, familyId);
+  if (bambini.length > 0) return bambini;
+  await inTransazione((client) => createChild(client, familyId, { name: NOME_BAMBINO_PROVVISORIO }));
+  return listChildrenOfFamily(pool, familyId);
+}
 
 export const authRouter = Router();
 
@@ -25,9 +40,11 @@ authRouter.post('/register', async (req, res, next) => {
     const dati = registrazioneSchema.parse(req.body);
     const risultato = await withTransaction(async (client) => {
       const { family, parentUser } = await createFamily(client, dati);
-      const bambino = dati.childName
-        ? await createChild(client, family.id, { name: dati.childName, age: dati.childAge ?? null })
-        : null;
+      // Sempre un profilo: senza, l'app non avrebbe niente da caricare.
+      const bambino = await createChild(client, family.id, {
+        name: dati.childName ?? NOME_BAMBINO_PROVVISORIO,
+        age: dati.childAge ?? null,
+      });
       return { family, parentUser, bambino };
     });
     res.status(201).json({
@@ -38,7 +55,7 @@ authRouter.post('/register', async (req, res, next) => {
         scope: 'family',
       }),
       family: { id: risultato.family.id, name: risultato.family.name },
-      children: risultato.bambino ? [risultato.bambino] : [],
+      children: [risultato.bambino],
     });
   } catch (err) {
     next(err);
@@ -57,7 +74,7 @@ authRouter.post('/login', async (req, res, next) => {
     if (rows.length === 0 || !(await verifySecret(password, rows[0].password_hash))) {
       throw unauthorized('Email o password non corretti.');
     }
-    const bambini = await listChildrenOfFamily(pool, rows[0].family_id);
+    const bambini = await assicuraBambino(rows[0].family_id);
     res.json({
       token: signToken({ userId: rows[0].id, familyId: rows[0].family_id, role: 'PARENT', scope: 'family' }),
       family: { id: rows[0].family_id, name: rows[0].family_name },
@@ -77,7 +94,7 @@ authRouter.post('/demo', async (_req, res, next) => {
       [DEMO_EMAIL],
     );
     if (rows.length === 0) throw notFound('Profilo demo non disponibile.');
-    const bambini = await listChildrenOfFamily(pool, rows[0].family_id);
+    const bambini = await assicuraBambino(rows[0].family_id);
     res.json({
       token: signToken({ userId: rows[0].id, familyId: rows[0].family_id, role: 'PARENT', scope: 'family' }),
       family: { id: rows[0].family_id, name: rows[0].family_name },
@@ -111,7 +128,7 @@ authRouter.post('/parent-mode', requireAuth, async (req, res, next) => {
 authRouter.get('/me', requireAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(`SELECT id, name FROM families WHERE id = $1`, [req.auth!.familyId]);
-    const bambini = await listChildrenOfFamily(pool, req.auth!.familyId);
+    const bambini = await assicuraBambino(req.auth!.familyId);
     res.json({
       family: rows[0] ?? null,
       children: bambini,
