@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Public Sans', 'Helvetica Neue', Helvetica, sans-serif; }
+    a { color: #b8451f; } a:hover { color: #8f3517; }
+    .display { font-family: 'Bricolage Grotesque', 'Helvetica Neue', Helvetica, sans-serif; }
+    .num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+    .chip { border: 0; font-family: inherit; cursor: pointer; }
+    .etichetta { font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #6b6a72; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #17161a; color: #17161a; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;">
+
+  <!-- la home che resta dietro, appena visibile -->
+  <div style="position: absolute; top: 0; left: 0; right: 0; padding: 22px 20px; opacity: .34;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 42px; height: 42px; border-radius: 14px; background: #f0ebe1; display: grid; place-items: center; font-size: 22px;">🦄</div>
+      <div style="flex: 1;">
+        <div class="display" style="font-size: 19px; font-weight: 700; color: #fbf9f5;">Ciao, Sofia</div>
+        <div style="font-size: 11px; font-weight: 600; color: #cfcbc2; margin-top: 2px;">LIVELLO 3</div>
+      </div>
+      <div class="display num" style="font-size: 21px; font-weight: 700; color: #fbf9f5;">208,80</div>
+    </div>
+  </div>
+
+  <!-- ============================================ LA SCHEDA -->
+  <div style="background: #fbf9f5; border-radius: 28px 28px 0 0; padding: 10px 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+    <div style="width: 44px; height: 5px; border-radius: 999px; background: #ddd8cd; margin: 0 auto 2px;"></div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="display" style="font-size: 21px; font-weight: 700; letter-spacing: -.025em;">Cosa vuoi comprare?</div>
+      <div style="margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: #f0ebe1; display: grid; place-items: center; flex-shrink: 0;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b6a72" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------- QUANTO COSTA -->
+    <div>
+      <div class="etichetta">Quanto costa</div>
+      <div style="display: flex; align-items: flex-end; gap: 6px; margin-top: 2px;">
+        <div class="display num" style="font-size: 46px; font-weight: 800; letter-spacing: -.045em; line-height: 1;">{{ importoTesto }}</div>
+        <div class="display" style="font-size: 26px; font-weight: 700; color: #6b6a72; padding-bottom: 3px;">€</div>
+        <div style="margin-left: auto; font-size: 13px; color: #6b6a72; padding-bottom: 5px;">Uno slime</div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <sc-for list="{{ importi }}" as="c" hint-placeholder-count="4">
+          <button class="chip num" style="{{ c.stile }}" onClick="{{ c.scegli }}">{{ c.testo }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------- DA QUALE SALVADANAIO -->
+    <div>
+      <div class="etichetta" style="margin-bottom: 7px;">Da quale salvadanaio</div>
+      <div style="display: flex; gap: 8px;">
+        <button class="chip" style="{{ bottoneSpend }}" onClick="{{ scegliSpend }}">
+          SPENDO &middot; <span class="num">34,50</span>
+        </button>
+        <button class="chip" style="{{ bottoneSave }}" onClick="{{ scegliSave }}">
+          RISPARMIO &middot; <span class="num">161,30</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------- COSA SUCCEDE -->
+    <div style="background: #fff; border: 1px solid #e6e2da; border-radius: 20px; padding: 15px 16px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#17161a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9.5V13l2.5 1.5"></path><path d="M9 3h6"></path></svg>
+        <span style="font-size: 14px; font-weight: 700;">La bicicletta, in settimane</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 9px;">
+        <span style="font-size: 12px; color: #6b6a72; width: 92px; flex-shrink: 0;">{{ corsia1.etichetta }}</span>
+        <span style="display: flex; gap: 3px; flex: 1;">
+          <sc-for list="{{ corsia1.blocchi }}" as="b" hint-placeholder-count="9">
+            <span style="{{ b.stile }}"></span>
+          </sc-for>
+        </span>
+        <span class="display num" style="font-size: 15px; font-weight: 700; width: 20px; text-align: right; flex-shrink: 0;">{{ corsia1.numero }}</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 600; width: 92px; flex-shrink: 0;">{{ corsia2.etichetta }}</span>
+        <span style="display: flex; gap: 3px; flex: 1;">
+          <sc-for list="{{ corsia2.blocchi }}" as="b" hint-placeholder-count="11">
+            <span style="{{ b.stile }}"></span>
+          </sc-for>
+        </span>
+        <span class="display num" style="font-size: 15px; font-weight: 700; width: 20px; text-align: right; flex-shrink: 0;">{{ corsia2.numero }}</span>
+      </div>
+
+      <div style="{{ stileMessaggio }}">{{ messaggio }}</div>
+    </div>
+
+    <!-- ---------------------------------------- DECISIONE -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; border-radius: 18px; background: #17161a; color: #fbf9f5; font-size: 16px; font-weight: 600;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+      L&rsquo;ho comprato, registra
+    </div>
+    <div style="text-align: center; font-size: 12.5px; color: #6b6a72;">Decidi tu. Io ti mostro solo cosa succede.</div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // il profilo dimostrativo di Sofia, con i numeri veri dell'app
+    this.state = { importo: 1200, jar: "SPEND" };
+  }
+
+  euro(c) {
+    return (c / 100).toFixed(2).replace(".", ",");
+  }
+
+  blocchi(quanti, colore, massimo) {
+    const out = [];
+    for (let i = 0; i < massimo; i++) {
+      const pieno = i < quanti;
+      const sfondo = pieno ? (i < 9 ? "#0f8b52" : colore) : "#ece7dd";
+      out.push({ stile: "flex:1;height:20px;border-radius:5px;background:" + sfondo });
+    }
+    return out;
+  }
+
+  renderVals() {
+    const SPEND = 3450;
+    const SAVE = 16130;
+    const MANCANO = 8870;      // 88,70 € al traguardo della bicicletta
+    const RITMO = 986;         // circa 9,86 € messi da parte a settimana
+    const importo = this.state.importo;
+    const jar = this.state.jar;
+
+    const base = Math.ceil(MANCANO / RITMO);                    // 9 settimane
+    const conAcquisto = Math.ceil((MANCANO + importo) / RITMO);  // se paga dal risparmio
+    const opportunita = Math.floor(importo / RITMO);             // settimane guadagnate se li risparmiasse
+    const saldo = jar === "SPEND" ? SPEND : SAVE;
+    const bastano = saldo >= importo;
+
+    const scala = Math.max(base, conAcquisto, 9);
+
+    let corsia1;
+    let corsia2;
+    let messaggio;
+    let toni;
+
+    if (jar === "SAVE") {
+      corsia1 = { etichetta: "Se non lo compro", numero: String(base), blocchi: this.blocchi(base, "#d97706", scala) };
+      corsia2 = { etichetta: "Se lo compro", numero: String(conAcquisto), blocchi: this.blocchi(conAcquisto, "#d97706", scala) };
+      const differenza = conAcquisto - base;
+      messaggio = differenza > 0
+        ? "Prendendoli dal RISPARMIO, la bicicletta arriva " + differenza + (differenza === 1 ? " settimana" : " settimane") + " dopo."
+        : "La bicicletta resta più o meno alla stessa distanza.";
+      toni = differenza > 0 ? "#fbefe0" : "#e7f3ec";
+    } else {
+      corsia1 = { etichetta: "Se lo compro", numero: String(base), blocchi: this.blocchi(base, "#d97706", scala) };
+      const prima = Math.max(base - opportunita, 0);
+      corsia2 = { etichetta: "Se li risparmio", numero: String(prima), blocchi: this.blocchi(prima, "#0f8b52", scala) };
+      messaggio = opportunita > 0
+        ? "Sono soldi tuoi dello SPENDO: la bicicletta non cambia. Però se li mettessi da parte arriverebbe " + opportunita + (opportunita === 1 ? " settimana" : " settimane") + " prima."
+        : "Sono soldi tuoi dello SPENDO: la bicicletta non cambia.";
+      toni = "#e7effe";
+    }
+
+    if (!bastano) {
+      messaggio = "In questo salvadanaio ti mancano " + this.euro(importo - saldo) + " €. Puoi comunque scegliere l'altro salvadanaio.";
+      toni = "#fbefe0";
+    }
+
+    const chip = (attivo) =>
+      "padding:9px 14px;border-radius:999px;font-size:14px;font-weight:600;" +
+      (attivo
+        ? "background:#17161a;color:#fbf9f5;"
+        : "background:#fff;color:#17161a;box-shadow:inset 0 0 0 1px #e6e2da;");
+
+    const salvadanaio = (attivo, colore) =>
+      "flex:1;padding:12px 10px;border-radius:16px;font-size:12.5px;font-weight:700;letter-spacing:.02em;text-align:center;" +
+      (attivo
+        ? "background:" + colore + ";color:#fff;"
+        : "background:#fff;color:#6b6a72;box-shadow:inset 0 0 0 1px #e6e2da;");
+
+    return {
+      importoTesto: this.euro(importo),
+      importi: [250, 1200, 2500, 4000].map((c) => ({
+        testo: this.euro(c),
+        stile: chip(c === importo),
+        scegli: () => this.setState({ importo: c }),
+      })),
+      bottoneSpend: salvadanaio(jar === "SPEND", "#1d6ff2"),
+      bottoneSave: salvadanaio(jar === "SAVE", "#0f8b52"),
+      scegliSpend: () => this.setState({ jar: "SPEND" }),
+      scegliSave: () => this.setState({ jar: "SAVE" }),
+      corsia1,
+      corsia2,
+      messaggio,
+      stileMessaggio:
+        "margin-top:13px;background:" + toni + ";border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.4;",
+    };
+  }
+}
+</script>
+</body>
+</html>

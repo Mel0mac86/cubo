@@ -1,0 +1,190 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Public Sans', 'Helvetica Neue', Helvetica, sans-serif; }
+    a { color: #b8451f; } a:hover { color: #8f3517; }
+    .display { font-family: 'Bricolage Grotesque', 'Helvetica Neue', Helvetica, sans-serif; }
+    .num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+    .giorno { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; color: #9a978e; padding: 14px 0 6px; }
+    .riga { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #ece7dd; }
+    .pallino { width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #fbf9f5; color: #17161a; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+
+  <!-- ============================================ TESTA -->
+  <div style="padding: 22px 20px 0;">
+    <div style="display: flex; align-items: baseline; gap: 10px;">
+      <div class="display" style="font-size: 27px; font-weight: 700; letter-spacing: -.03em;">Storico</div>
+      <div class="num" style="font-size: 13px; color: #6b6a72; margin-left: auto;">34 movimenti</div>
+    </div>
+
+    <!-- riepilogo del mese: due soli numeri -->
+    <div style="display: flex; gap: 10px; margin-top: 14px;">
+      <div style="flex: 1; background: #fff; border: 1px solid #e6e2da; border-radius: 16px; padding: 11px 14px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #6b6a72;">Entrato a marzo</div>
+        <div class="display num" style="font-size: 21px; font-weight: 700; letter-spacing: -.03em; color: #0f8b52; margin-top: 2px;">+42,00</div>
+      </div>
+      <div style="flex: 1; background: #fff; border: 1px solid #e6e2da; border-radius: 16px; padding: 11px 14px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #6b6a72;">Uscito a marzo</div>
+        <div class="display num" style="font-size: 21px; font-weight: 700; letter-spacing: -.03em; margin-top: 2px;">&minus;11,50</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ FILTRI -->
+  <div style="display: flex; gap: 20px; padding: 16px 20px 0; border-bottom: 1px solid #e6e2da; overflow: hidden;">
+    <div style="font-size: 14px; font-weight: 700; padding-bottom: 10px; border-bottom: 2.5px solid #17161a; white-space: nowrap;">Tutto</div>
+    <div style="font-size: 14px; font-weight: 500; color: #6b6a72; padding-bottom: 10px; white-space: nowrap;">Entrate</div>
+    <div style="font-size: 14px; font-weight: 500; color: #6b6a72; padding-bottom: 10px; white-space: nowrap;">Spese</div>
+    <div style="font-size: 14px; font-weight: 500; color: #6b6a72; padding-bottom: 10px; white-space: nowrap;">Risparmio</div>
+    <div style="font-size: 14px; font-weight: 500; color: #6b6a72; padding-bottom: 10px; white-space: nowrap;">Doni</div>
+    <div style="font-size: 14px; font-weight: 500; color: #6b6a72; padding-bottom: 10px; white-space: nowrap;">Inter</div>
+  </div>
+
+  <!-- ============================================ LISTA -->
+  <div style="padding: 0 20px; flex: 1; min-height: 0; overflow: hidden;">
+
+    <div class="giorno">OGGI</div>
+
+    <div class="riga">
+      <div class="pallino" style="background: #e7f3ec;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#0f8b52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6"></path><path d="M6.5 11.5 12 6l5.5 5.5"></path></svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Paghetta divisa</div>
+        <div style="font-size: 12px; color: #6b6a72; margin-top: 1px;">Entrata &middot; Risparmio</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="display num" style="font-size: 16px; font-weight: 700; color: #0f8b52;">+6,00</div>
+        <div class="num" style="font-size: 11px; color: #9a978e; margin-top: 1px;">saldo 161,30</div>
+      </div>
+    </div>
+
+    <div class="riga">
+      <div class="pallino" style="background: #e7effe;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#1d6ff2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6"></path><path d="M6.5 11.5 12 6l5.5 5.5"></path></svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Paghetta divisa</div>
+        <div style="font-size: 12px; color: #6b6a72; margin-top: 1px;">Entrata &middot; Spendo</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="display num" style="font-size: 16px; font-weight: 700; color: #0f8b52;">+3,00</div>
+        <div class="num" style="font-size: 11px; color: #9a978e; margin-top: 1px;">saldo 34,50</div>
+      </div>
+    </div>
+
+    <div class="riga">
+      <div class="pallino" style="background: #fbefe0;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6"></path><path d="M6.5 11.5 12 6l5.5 5.5"></path></svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Paghetta divisa</div>
+        <div style="font-size: 12px; color: #6b6a72; margin-top: 1px;">Entrata &middot; Dono</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="display num" style="font-size: 16px; font-weight: 700; color: #0f8b52;">+1,00</div>
+        <div class="num" style="font-size: 11px; color: #9a978e; margin-top: 1px;">saldo 13,00</div>
+      </div>
+    </div>
+
+    <div class="giorno">IERI</div>
+
+    <div class="riga">
+      <div class="pallino" style="background: #f0ebe1;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#17161a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5a6 6 0 0 1 12 0"></path><path d="M4 20h16"></path><path d="M9 8.5 12 4l3 4.5"></path></svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ho lavato la macchina</div>
+        <div style="font-size: 12px; color: #6b6a72; margin-top: 1px;">Lavoro approvato &middot; Risparmio</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="display num" style="font-size: 16px; font-weight: 700; color: #0f8b52;">+3,00</div>
+        <div class="num" style="font-size: 11px; color: #9a978e; margin-top: 1px;">saldo 155,30</div>
+      </div>
+    </div>
+
+    <div class="riga">
+      <div class="pallino" style="background: #e7effe;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#1d6ff2" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-10Z"></path><path d="M4 8.5 6.8 4h10.4L20 8.5"></path><path d="M9 12.5a3 3 0 0 0 6 0"></path></svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Gelato con Giulia</div>
+        <div style="font-size: 12px; color: #6b6a72; margin-top: 1px;">Spesa &middot; Spendo</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="display num" style="font-size: 16px; font-weight: 700;">&minus;2,50</div>
+        <div class="num" style="font-size: 11px; color: #9a978e; margin-top: 1px;">saldo 31,50</div>
+      </div>
+    </div>
+
+    <div class="giorno">1 MARZO</div>
+
+    <div class="riga">
+      <div class="pallino" style="background: #e7f3ec;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#0f8b52" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20c0-5 2.5-8 7-8.5-.5 4.5-3 7-7 8.5Z"></path><path d="M12 20c0-4.5-2.2-7.2-6.3-7.7C6.2 16.3 8.4 18.7 12 20Z"></path><path d="M12 20v-6"></path></svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Il denaro &egrave; cresciuto</div>
+        <div style="font-size: 12px; color: #6b6a72; margin-top: 1px;">Interesse del mese &middot; Risparmio</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="display num" style="font-size: 16px; font-weight: 700; color: #0f8b52;">+2,42</div>
+        <div class="num" style="font-size: 11px; color: #9a978e; margin-top: 1px;">saldo 152,30</div>
+      </div>
+    </div>
+
+    <div class="riga" style="border-bottom: 0;">
+      <div class="pallino" style="background: #fbefe0;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#d97706" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.5S4.5 15 4.5 9.8A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7.5 1.8c0 5.2-7.5 9.7-7.5 9.7Z"></path></svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Canile di Aosta</div>
+        <div style="font-size: 12px; color: #6b6a72; margin-top: 1px;">Donazione &middot; Dono</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="display num" style="font-size: 16px; font-weight: 700;">&minus;9,00</div>
+        <div class="num" style="font-size: 11px; color: #9a978e; margin-top: 1px;">saldo 12,00</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================ BARRA IN BASSO -->
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; background: #fff; border-top: 1px solid #e6e2da; padding: 9px 6px 22px; flex-shrink: 0;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #9a978e;">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5"></path><path d="M6 10v9.5h12V10"></path><path d="M10 19.5V14h4v5.5"></path></svg>
+      <span style="font-size: 10.5px; font-weight: 600;">Casa</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #9a978e;">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="M14.2 9.4a2.6 2.6 0 0 0-4.4 1.4c0 2.4 4.4 1.4 4.4 3.4a2.6 2.6 0 0 1-4.4 1.4"></path><path d="M12 7v10"></path></svg>
+      <span style="font-size: 10.5px; font-weight: 600;">Guadagno</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #9a978e;">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 12 4.5l9 4-9 4-9-4Z"></path><path d="M6.5 10.5V16c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-5.5"></path></svg>
+      <span style="font-size: 10.5px; font-weight: 600;">Imparo</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #9a978e;">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"></rect><path d="M12 4v4"></path><circle cx="9.5" cy="13.5" r="1"></circle><circle cx="14.5" cy="13.5" r="1"></circle><path d="M9.5 17h5"></path></svg>
+      <span style="font-size: 10.5px; font-weight: 600;">Coach</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #17161a;">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12a1 1 0 0 1 1 1v15l-3.5-2-3.5 2-3.5-2L5 20V5a1 1 0 0 1 1-1Z"></path><path d="M9 9h6"></path><path d="M9 13h4"></path></svg>
+      <span style="font-size: 10.5px; font-weight: 700;">Storico</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

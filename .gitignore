@@ -11,5 +11,5 @@ coverage/
 *.tsbuildinfo
 
 # Canvas di design generato (si rigenera dai file .dc.html)
-design/*.html
-!design/*.dc.html
+design/**/*.html
+!design/**/*.dc.html

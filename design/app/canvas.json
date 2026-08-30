@@ -1,0 +1,55 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Nuova grafica" },
+    { "id": "page-2", "name": "Prima e alternative" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844, "title": "Oggi", "page": "page-1" },
+    { "file": "Missione.dc.html", "x": 470, "y": 0, "w": 390, "h": 844, "title": "La missione", "page": "page-1" },
+    { "file": "Acquisto.dc.html", "x": 940, "y": 0, "w": 390, "h": 844, "title": "Compro qualcosa", "page": "page-1", "is_interactive": true },
+    { "file": "Storico.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "Storico", "page": "page-1" },
+
+    { "file": "Attuale.dc.html", "x": 0, "y": 0, "w": 390, "h": 844, "title": "Prima", "page": "page-2" },
+    { "file": "DirezioneB.dc.html", "x": 470, "y": 0, "w": 390, "h": 844, "title": "B · Salvadanaio", "page": "page-2" },
+    { "file": "DirezioneC.dc.html", "x": 940, "y": 0, "w": 390, "h": 844, "title": "C · Missione", "page": "page-2" }
+  ],
+  "annotations": [
+    {
+      "id": "nota-oggi",
+      "page": "page-1",
+      "x": 0, "y": -250, "w": 390,
+      "text": "OGGI\nI tre salvadanai stanno affiancati e si riempiono davvero: l'altezza del liquido è quanto contiene ciascuno rispetto al totale. Si legge in un secondo, e DONO non finisce più sotto la piega.\n\nUna sola cosa nera nella schermata: quello che c'è da fare adesso. Il colore torna a essere dei soldi, non della cornice."
+    },
+    {
+      "id": "nota-missione",
+      "page": "page-1",
+      "x": 470, "y": -250, "w": 390,
+      "text": "LA MISSIONE\nIl sentiero al posto della sola barra: le tappe hanno una cifra e una data, e «SEI QUI» dice esattamente a che punto si è.\n\nSotto, il ritmo vero (9,86 € a settimana) che è il numero da cui esce ogni previsione dell'app."
+    },
+    {
+      "id": "nota-acquisto",
+      "page": "page-1",
+      "x": 940, "y": -250, "w": 390,
+      "text": "COMPRO QUALCOSA — questa schermata funziona: prova a toccare gli importi e a cambiare salvadanaio.\n\nÈ il cuore del progetto: «TU DECIDI. NOI TI MOSTRIAMO COSA SUCCEDE.» Le due corsie confrontano i due futuri in settimane. Dallo SPENDO la bicicletta non si sposta e si vede il costo-opportunità; dal RISPARMIO si allunga davvero. Il tasto per comprare resta sempre attivo: non blocca mai."
+    },
+    {
+      "id": "nota-storico",
+      "page": "page-1",
+      "x": 1410, "y": -250, "w": 390,
+      "text": "STORICO\nUn registro vero: raggruppato per giorno, cifre incolonnate, e sotto ogni importo il saldo che resta in quel salvadanaio — è il dato che il database già tiene su ogni riga.\n\nI filtri diventano linguette sottolineate: occupano metà spazio dei pulsanti tondi di prima."
+    },
+    {
+      "id": "nota-prima",
+      "page": "page-2",
+      "x": 0, "y": -250, "w": 390,
+      "text": "PRIMA — la home di adesso, ricostruita con i valori esatti di web/src/styles/global.css.\n\nI due problemi: i tre salvadanai non entrano nella prima schermata, e le icone sono emoji di sistema — cambiano faccia su ogni telefono e non si ricolorano."
+    },
+    {
+      "id": "nota-altre",
+      "page": "page-2",
+      "x": 470, "y": -250, "w": 390,
+      "text": "LE ALTRE DUE DIREZIONI, tenute qui per confronto.\n\nB · Salvadanaio: la metafora presa alla lettera. La nuova grafica ne prende i barattoli che si riempiono, ma piccoli e in fila.\n\nC · Missione: scura, con XP in evidenza. Scartata perché spinge sulla gamification, che il progetto voleva tenere a bada."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}
