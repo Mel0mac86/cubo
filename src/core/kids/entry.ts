@@ -17,8 +17,9 @@
 
 import { COLOR_LABEL_IT, COLOR_LABEL_IT_PLURAL, CubeColor, Face } from '../cube/defs';
 
-/** Quante volte ogni colore compare su un cubo 3x3 vero. */
+/** Quante volte ogni colore compare su un cubo vero: 9 sul 3x3, 16 sul 4x4. */
 export const QUADRATINI_PER_COLORE = 9;
+export const QUADRATINI_PER_COLORE_4 = 16;
 
 /** I sei colori, nell'ordine in cui li mostriamo. */
 export const COLORI: CubeColor[] = [
@@ -48,7 +49,10 @@ export interface ContoColore {
 }
 
 /** Il conto di tutti e sei i colori sui 54 quadratini. */
-export function contaColori(colors: (CubeColor | null)[]): ContoColore[] {
+export function contaColori(
+  colors: (CubeColor | null)[],
+  perColore = QUADRATINI_PER_COLORE,
+): ContoColore[] {
   const n = new Array(COLORI.length).fill(0);
   for (const c of colors) {
     if (c === null || c === undefined) continue;
@@ -57,14 +61,14 @@ export function contaColori(colors: (CubeColor | null)[]): ContoColore[] {
   return COLORI.map((color) => ({
     color,
     messi: n[color],
-    restanti: QUADRATINI_PER_COLORE - n[color],
-    troppi: n[color] > QUADRATINI_PER_COLORE,
+    restanti: perColore - n[color],
+    troppi: n[color] > perColore,
   }));
 }
 
 /** I colori messi piu' di nove volte (di solito uno solo). */
-export function coloriDiTroppo(colors: (CubeColor | null)[]): CubeColor[] {
-  return contaColori(colors)
+export function coloriDiTroppo(colors: (CubeColor | null)[], perColore = QUADRATINI_PER_COLORE): CubeColor[] {
+  return contaColori(colors, perColore)
     .filter((c) => c.troppi)
     .map((c) => c.color);
 }
@@ -73,16 +77,16 @@ export function coloriDiTroppo(colors: (CubeColor | null)[]): CubeColor[] {
  * I colori che mancano all'appello, ma solo quando i 54 quadratini sono tutti
  * pieni: a meta' inserimento "mancano" quasi tutti ed e' del tutto normale.
  */
-export function coloriMancanti(colors: (CubeColor | null)[]): CubeColor[] {
+export function coloriMancanti(colors: (CubeColor | null)[], perColore = QUADRATINI_PER_COLORE): CubeColor[] {
   if (colors.some((c) => c === null || c === undefined)) return [];
-  return contaColori(colors)
-    .filter((c) => c.messi < QUADRATINI_PER_COLORE)
+  return contaColori(colors, perColore)
+    .filter((c) => c.messi < perColore)
     .map((c) => c.color);
 }
 
 /** Quanti quadratini di questo colore possiamo ancora mettere (mai negativo). */
-export function restanti(colors: (CubeColor | null)[], color: CubeColor): number {
-  const c = contaColori(colors).find((x) => x.color === color)!;
+export function restanti(colors: (CubeColor | null)[], color: CubeColor, perColore = QUADRATINI_PER_COLORE): number {
+  const c = contaColori(colors, perColore).find((x) => x.color === color)!;
   return Math.max(0, c.restanti);
 }
 
@@ -91,9 +95,10 @@ export function conFaccia(
   colors: (CubeColor | null)[],
   face: Face,
   cells: (CubeColor | null)[],
+  perFaccia = 9,
 ): (CubeColor | null)[] {
   const out = colors.slice();
-  for (let i = 0; i < 9; i++) out[face * 9 + i] = cells[i] ?? null;
+  for (let i = 0; i < perFaccia; i++) out[face * perFaccia + i] = cells[i] ?? null;
   return out;
 }
 
@@ -101,10 +106,10 @@ export function conFaccia(
  * Frase da far dire a Rubi quando un colore sfora il nove.
  * Niente numeri tecnici: si spiega la regola e si dice cosa fare.
  */
-export function avvisoTroppiColori(color: CubeColor, messi: number): string {
+export function avvisoTroppiColori(color: CubeColor, messi: number, perColore = QUADRATINI_PER_COLORE): string {
   return (
     `Aspetta! Adesso ho contato ${messi} quadratini ${COLOR_LABEL_IT_PLURAL[color]}, ` +
-    `ma su un cubo vero ogni colore sta esattamente 9 volte. ` +
+    `ma su questo cubo ogni colore sta esattamente ${perColore} volte. ` +
     `Vuol dire che uno di quelli ${COLOR_LABEL_IT_PLURAL[color]} in realta e di un altro colore: ` +
     `guardiamolo bene insieme! Il ${COLOR_LABEL_IT[color]} di troppo e uno di quelli col bordo rosso.`
   );

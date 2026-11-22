@@ -9,6 +9,8 @@ interface Props {
   cells: (CubeColor | null)[];
   /** Mostra anche i colori non ancora usati (di default si vedono tutti). */
   compact?: boolean;
+  /** Quante volte ogni colore deve comparire: 9 sul cubo normale, 16 sul grande. */
+  perColore?: number;
 }
 
 /**
@@ -20,26 +22,26 @@ interface Props {
  * sotto gli occhi. Scoprirlo solo alla fine, dopo 54 tocchi, e' quello che
  * faceva dire all'app "hai messo un colore di troppo" senza poter aiutare.
  */
-export default function ColorTally({ cells, compact }: Props) {
-  const conti = contaColori(cells);
+export default function ColorTally({ cells, compact, perColore = QUADRATINI_PER_COLORE }: Props) {
+  const conti = contaColori(cells, perColore);
   const sbagliato = conti.some((c) => c.troppi);
 
   return (
     <View style={styles.wrap}>
       {conti.map((c) => (
-        <Gettone key={c.color} conto={c} compact={compact} />
+        <Gettone key={c.color} conto={c} compact={compact} perColore={perColore} />
       ))}
       {sbagliato ? (
         <Text style={styles.warn}>
-          ⚠️ Ogni colore sta 9 volte: quello segnato in rosso e di troppo
+          ⚠️ Ogni colore sta {perColore} volte: quello segnato in rosso e di troppo
         </Text>
       ) : null}
     </View>
   );
 }
 
-function Gettone({ conto, compact }: { conto: ContoColore; compact?: boolean }) {
-  const completo = conto.messi === QUADRATINI_PER_COLORE;
+function Gettone({ conto, compact, perColore }: { conto: ContoColore; compact?: boolean; perColore: number }) {
+  const completo = conto.messi === perColore;
   return (
     <View
       style={[
@@ -51,10 +53,10 @@ function Gettone({ conto, compact }: { conto: ContoColore; compact?: boolean }) 
       <Text style={styles.emoji}>{COLOR_EMOJI[conto.color]}</Text>
       <Text
         style={[styles.count, conto.troppi && styles.countBad]}
-        accessibilityLabel={`${conto.messi} su ${QUADRATINI_PER_COLORE}`}
+        accessibilityLabel={`${conto.messi} su ${perColore}`}
       >
         {conto.messi}
-        {compact ? '' : `/${QUADRATINI_PER_COLORE}`}
+        {compact ? '' : `/${perColore}`}
       </Text>
       {conto.troppi ? <Text style={styles.bang}>⚠️</Text> : null}
     </View>

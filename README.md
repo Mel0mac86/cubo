@@ -427,6 +427,112 @@ conferma arriva a «IL TUO CUBO È PRONTO».
 
 ---
 
+## Il cubo 4×4
+
+Il cubo grande non è «il 3×3 con più quadratini»: è un altro puzzle, e tre
+differenze cambiano tutto.
+
+**I centri si muovono.** Sul 3×3 il centro di una faccia non si sposta mai, ed è
+lui a dire «questa faccia è la bianca» — tutta l'app si regge su quel fatto. Sul
+4×4 ogni faccia ha quattro pezzi centrali che girano per tutto il cubo, quindi
+all'inizio non dicono niente. A dire lo schema dei colori sono gli **angoli**:
+due colori che non si incontrano mai su nessun angolo sono per forza opposti, e
+l'ordine in cui i tre colori girano attorno a un angolo distingue il cubo dalla
+sua immagine allo specchio. Si provano tutte le 720 corrispondenze
+colore-faccia e si tengono le 24 compatibili con gli angoli che si vedono, poi
+si sceglie quella che lascia più quadratini già al loro posto — così la
+soluzione non comincia chiedendo al bambino di girare tutto il cubo.
+
+**Ci sono 24 alette invece di 12 spigoli**, da appaiare a due a due.
+
+**Le parità sono lecite.** Uno spigolo girato da solo, o due spigoli scambiati,
+su un 3×3 sono la prova che il cubo è stato letto male. Sul 4×4 sono situazioni
+normalissime. Il validatore del cubo grande è quindi un altro validatore:
+rifiutarle manderebbe il bambino a ricontrollare colori giustissimi
+all'infinito.
+
+### Come lo risolve
+
+Non si inventa un metodo nuovo: si **riduce** il cubo grande a uno che l'app sa
+già risolvere. Sono le quattro tappe che il bambino vede sullo schermo:
+
+1. **I quadrati in mezzo** — i quattro pezzi centrali di ogni faccia tornano
+   insieme (~33 mosse)
+2. **Le coppie di lato** — le 24 alette diventano 12 spigoli doppi (~72 mosse)
+3. **Un caso speciale** — solo quando serve: le parità (~13 mosse)
+4. **Adesso è un cubo normale!** — ci pensa Kociemba, il motore del 3×3 (~21)
+
+### Le tabelle delle mosse non sono scritte a mano
+
+Un 4×4 ha 36 mosse, ognuna una permutazione di 96 numeri. Scritte a mano
+sarebbero sbagliate di sicuro, e un errore in una tabella non si vede finché il
+bambino non si trova in mano una soluzione che non funziona.
+
+Qui invece ogni quadratino è un punto nello spazio con la sua direzione, una
+mossa è una rotazione di quei punti, e le tabelle si ricavano da sole
+(`src/core/cube4/geometry.ts`). Lo stesso codice, con N = 3, deve dare
+**esattamente** le mosse del motore 3×3 già collaudato: è quel test a tenere
+insieme tutto il resto.
+
+### Il problema vero: appaiare le alette senza rompere i centri
+
+Dopo aver rimesso insieme i centri non si possono più usare le mosse larghe a
+cuor leggero: una sola basta a sparpagliare tutto. Ma senza mosse larghe le
+alette non si possono appaiare. La via d'uscita è usarle **a coppie**: una
+sequenza `W X W⁻¹` rimette i pezzi centrali da dove li aveva presi. Invece di
+ragionarci caso per caso, l'app le genera tutte e tiene solo quelle che, alla
+prova dei fatti, lasciano ogni pezzo centrale sulla sua faccia — circa 110 000
+«mosse composte», costruite in 2,5 secondi.
+
+I soli coniugati però non bastano: il goloso arriva a **dieci spigoli su
+dodici** e lì si pianta sempre, perché per sistemare gli ultimi due bisogna
+prima scucirne uno già fatto. Servono due cose:
+
+- i **commutatori** `A B A⁻¹ B⁻¹`, che sanno spostare solo tre alette lasciando
+  ferme le altre ventuno (i coniugati spostano sempre bande intere: minimo sei);
+- una **memoria** degli stati già visti, che impedisce al goloso di rifare
+  subito il passo indietro.
+
+Misurato su 20 cubi: **13/20** col goloso puro, **20/20** con la memoria.
+
+### Le due parità, trovate cercando e non ricordandole
+
+- **Spigolo girato**: `Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2`,
+  preceduta da qualche mossa esterna per portarci sotto lo spigolo giusto (le
+  mosse esterne sono gratis: non toccano né centri né coppie).
+- **Spigoli scambiati**: `Rw2 R2 Uw2 U2 Rw2 Uw2 U2 R2 Uw2 U2` (a fette:
+  `r2 u2 Rw2 u2 R2 u2`). Questa è stata **cercata**, non ricordata: gli
+  algoritmi che avevo in mente non sopravvivevano alla prova, e un test fissa
+  adesso che faccia esattamente quello che serve.
+
+### I numeri
+
+Misurati su cubi mescolati con 40 mosse, con la soluzione **rifatta sul cubo di
+partenza** per controllare che lo risolva davvero — è l'unico controllo onesto,
+perché un bambino non si accorgerebbe di una soluzione sbagliata prima di
+essere arrivato in fondo a 140 mosse.
+
+| | |
+|---|---|
+| Cubi risolti e verificati | **200 / 200** |
+| Mosse: media / peggiore | 139 / 190 |
+| Per fase | centri 33 · coppie 72 · parità 13 · 3×3 21 |
+| Parità incontrate | 152 / 200 |
+| Tempo | 0,8 s a cubo (+2,5 s una volta sola per la libreria) |
+
+Sul cubo grande l'ultima fase usa **sempre** Kociemba, anche in modalità facile:
+col metodo a strati la soluzione passa da 139 a 227 mosse di media, e per un
+bambino è la differenza fra una cosa lunga e una impossibile.
+
+Provato anche nell'app vera nel browser: 96 quadratini inseriti a clic,
+validati, e soluzione di 138 mosse identica a quella del motore, con le quattro
+tappe e l'avviso **«✌️ DUE STRATI INSIEME»** sulle mosse larghe — che è l'errore
+più comune dei bambini sul 4×4.
+
+La fotocamera per adesso legge solo il cubo normale: il 4×4 si inserisce a mano.
+
+---
+
 ## Il linguaggio per bambini
 
 Ogni mossa viene tradotta in quello che il bambino **vede**, con la freccia

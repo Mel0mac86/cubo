@@ -7,6 +7,8 @@ import {
   facesToColors,
 } from '../../core/cube/scheme';
 import { CubieCube } from '../../core/cube/cubie';
+import { QUADRATINI } from '../../core/cube4/cube4';
+import { Soluzione4 } from '../../core/cube4/solver4';
 import { SolutionStage } from '../../core/solver/beginner';
 import { Move } from '../../core/cube/moves';
 
@@ -52,12 +54,27 @@ interface SessionValue {
   startedAt: number | null;
   startTimer: () => void;
   stopTimer: () => number | null;
+
+  /* --- il cubo grande (4x4) ---------------------------------------
+   * Tenuto a parte dal 3x3 e non al suo posto: i due cubi hanno numeri di
+   * quadratini diversi (54 contro 96) e regole diverse, e mescolarli in un
+   * campo solo vorrebbe dire controllare la taglia a ogni riga di codice. */
+  colori4: (CubeColor | null)[];
+  setColore4: (index: number, color: CubeColor | null) => void;
+  setFaccia4: (face: Face, cells: (CubeColor | null)[]) => void;
+  soluzione4: Soluzione4 | null;
+  setSoluzione4: (s: Soluzione4 | null) => void;
+  clear4: () => void;
 }
 
 const SessionContext = createContext<SessionValue | null>(null);
 
 function emptyColors(): (CubeColor | null)[] {
   return new Array(54).fill(null);
+}
+
+function emptyColors4(): (CubeColor | null)[] {
+  return new Array(QUADRATINI).fill(null);
 }
 
 /** Ri-esportate per comodita' delle schermate. */
@@ -70,6 +87,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [solution, setSolution] = useState<Solution | null>(null);
   const [helpUsed, setHelpUsed] = useState(0);
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [colori4, setColori4] = useState<(CubeColor | null)[]>(emptyColors4);
+  const [soluzione4, setSoluzione4] = useState<Soluzione4 | null>(null);
 
   const setColors = useCallback((c: (CubeColor | null)[]) => setColorsState([...c]), []);
 
@@ -107,6 +126,27 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return ms;
   }, [startedAt]);
 
+  const setColore4 = useCallback((index: number, color: CubeColor | null) => {
+    setColori4((prev) => {
+      const next = [...prev];
+      next[index] = color;
+      return next;
+    });
+  }, []);
+
+  const setFaccia4 = useCallback((face: Face, cells: (CubeColor | null)[]) => {
+    setColori4((prev) => {
+      const next = [...prev];
+      for (let i = 0; i < 16; i++) next[face * 16 + i] = cells[i] ?? null;
+      return next;
+    });
+  }, []);
+
+  const clear4 = useCallback(() => {
+    setColori4(emptyColors4());
+    setSoluzione4(null);
+  }, []);
+
   const colorOfFace = useMemo(() => deriveColorOfFace(colors), [colors]);
 
   const value = useMemo(
@@ -127,6 +167,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       startedAt,
       startTimer,
       stopTimer,
+      colori4,
+      setColore4,
+      setFaccia4,
+      soluzione4,
+      setSoluzione4,
+      clear4,
     }),
     [
       colors,
@@ -143,6 +189,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       startedAt,
       startTimer,
       stopTimer,
+      colori4,
+      setColore4,
+      setFaccia4,
+      soluzione4,
+      clear4,
     ],
   );
 

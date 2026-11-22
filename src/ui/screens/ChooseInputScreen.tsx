@@ -32,9 +32,11 @@ export default function ChooseInputScreen({ navigation }: Props) {
    * senza guardarle. Alla fine il conto dei colori non tornava e sembrava
    * colpa sua.
    */
-  const inizia = (dove: 'Scansione' | 'InserisciColori') => {
+  const inizia = (dove: 'Scansione' | 'InserisciColori' | 'Cubo4Colori') => {
     session.clear();
+    session.clear4();
     if (dove === 'Scansione') navigation.navigate('Scansione');
+    else if (dove === 'Cubo4Colori') navigation.navigate('Cubo4Colori', { faccia: 0 });
     else navigation.navigate('InserisciColori', { faceStep: 0 });
   };
 
@@ -63,11 +65,20 @@ export default function ChooseInputScreen({ navigation }: Props) {
         onPress={() => inizia('InserisciColori')}
       />
 
+      <BigButton
+        label="Ho un cubo 4x4!"
+        emoji="🧊"
+        sub="Il cubo grande, con quattro quadratini per lato"
+        color={colors.primary}
+        onPress={() => inizia('Cubo4Colori')}
+      />
+
       <Card style={styles.tip}>
         <Text style={styles.tipTitle}>💡 Un consiglio</Text>
         <Text style={styles.tipText}>
           Con la fotocamera e piu veloce, ma serve una stanza abbastanza illuminata. Se Rubi fa
-          fatica a vedere i colori, puoi sempre sceglierli tu: si fa in un attimo.
+          fatica a vedere i colori, puoi sempre sceglierli tu: si fa in un attimo. Il cubo 4x4 si
+          fa solo a mano: la fotocamera per adesso guarda solo quello normale.
         </Text>
       </Card>
     </Screen>

@@ -14,6 +14,8 @@ interface Props {
   /** Sicurezza del riconoscimento (0..1) per ciascun quadratino. */
   confidences?: number[];
   size?: number;
+  /** Quante caselle per lato: 3 sul cubo normale, 4 sul cubo grande. */
+  n?: number;
   /** Etichetta piccola sotto la griglia. */
   caption?: string;
 }
@@ -30,12 +32,16 @@ export default function FaceGrid({
   suspects = [],
   confidences,
   size = 260,
+  n = 3,
   caption,
 }: Props) {
-  const cell = (size - 8 * 4) / 3;
+  // Lo spazio fra le caselle si stringe quando sono di piu', cosi la griglia
+  // del cubo grande resta della stessa dimensione di quella del piccolo.
+  const vuoto = n >= 4 ? 5 : 8;
+  const cell = (size - vuoto * (n + 1)) / n;
   return (
     <View style={{ alignItems: 'center' }}>
-      <View style={[styles.grid, { width: size, height: size }]}>
+      <View style={[styles.grid, { width: size, height: size, gap: vuoto, padding: vuoto }]}>
         {cells.map((c, i) => {
           const suspect = suspects.includes(i);
           const unsure = confidences ? confidences[i] < 0.7 : false;
@@ -51,14 +57,15 @@ export default function FaceGrid({
                 {
                   width: cell,
                   height: cell,
+                  borderRadius: n >= 4 ? 7 : 10,
                   backgroundColor: c === null ? '#E5E7EB' : COLOR_HEX[c],
                 },
                 selected === i && styles.selected,
                 suspect && styles.suspect,
               ]}
             >
-              {i === 4 ? <View style={styles.centerDot} /> : null}
-              {c === null ? <Text style={styles.question}>?</Text> : null}
+              {n === 3 && i === 4 ? <View style={styles.centerDot} /> : null}
+              {c === null ? <Text style={[styles.question, n >= 4 && { fontSize: 20 }]}>?</Text> : null}
               {unsure && c !== null ? <Text style={styles.unsure}>⚠️</Text> : null}
             </Pressable>
           );
@@ -73,8 +80,6 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    padding: 8,
     backgroundColor: '#18181B',
     borderRadius: radius.md,
   },

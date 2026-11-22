@@ -41,7 +41,7 @@ export const SIDE_SHORT_IT: Record<Face, string> = {
  * Per ogni faccia, "giro orario guardando quella faccia da fuori" diventa un
  * movimento concreto: il lato destro va verso l'alto o verso il basso, ecc.
  */
-const DIRECTION_IT: Record<Face, { cw: string; ccw: string }> = {
+export const DIRECTION_IT: Record<Face, { cw: string; ccw: string }> = {
   // Guardando il cubo da davanti: girare U in senso orario (visto da sopra)
   // porta la fila di sopra verso sinistra.
   [Face.U]: { cw: 'verso sinistra', ccw: 'verso destra' },
@@ -55,7 +55,7 @@ const DIRECTION_IT: Record<Face, { cw: string; ccw: string }> = {
 /** Freccia da disegnare sopra la faccia. */
 export type ArrowDirection = 'su' | 'giu' | 'sinistra' | 'destra' | 'giro';
 
-const ARROW_IT: Record<Face, { cw: ArrowDirection; ccw: ArrowDirection }> = {
+export const ARROW_IT: Record<Face, { cw: ArrowDirection; ccw: ArrowDirection }> = {
   [Face.U]: { cw: 'sinistra', ccw: 'destra' },
   [Face.D]: { cw: 'destra', ccw: 'sinistra' },
   [Face.R]: { cw: 'su', ccw: 'giu' },

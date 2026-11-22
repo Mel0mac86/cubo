@@ -9,6 +9,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 import HomeScreen from './screens/HomeScreen';
 import ChooseInputScreen from './screens/ChooseInputScreen';
 import ColorInputScreen from './screens/ColorInputScreen';
+import Cubo4ColoriScreen from './screens/Cubo4ColoriScreen';
+import Cubo4ControlloScreen from './screens/Cubo4ControlloScreen';
+import Cubo4RisolviScreen from './screens/Cubo4RisolviScreen';
 import ScanScreen from './screens/ScanScreen';
 import FixColorsScreen from './screens/FixColorsScreen';
 import CheckScreen from './screens/CheckScreen';
@@ -35,6 +38,9 @@ export type RootStackParamList = {
   Home: undefined;
   ComeInserire: undefined;
   InserisciColori: { faceStep: number };
+  Cubo4Colori: { faccia: number };
+  Cubo4Controllo: undefined;
+  Cubo4Risolvi: undefined;
   Scansione: undefined;
   AnteprimaScansione: { uncertain?: number[] };
   Correggi: { face?: Face };
@@ -87,6 +93,9 @@ export default function Navigation() {
         <Stack.Screen name="Home" component={protetta(HomeScreen, "Home")} options={{ headerShown: false }} />
         <Stack.Screen name="ComeInserire" component={protetta(ChooseInputScreen, "ComeInserire")} options={{ title: 'Il tuo cubo' }} />
         <Stack.Screen name="InserisciColori" component={protetta(ColorInputScreen, "InserisciColori")} options={{ title: 'I colori' }} />
+        <Stack.Screen name="Cubo4Colori" component={protetta(Cubo4ColoriScreen, "Cubo4Colori")} options={{ title: 'Cubo grande' }} />
+        <Stack.Screen name="Cubo4Controllo" component={protetta(Cubo4ControlloScreen, "Cubo4Controllo")} options={{ title: 'Controllo' }} />
+        <Stack.Screen name="Cubo4Risolvi" component={protetta(Cubo4RisolviScreen, "Cubo4Risolvi")} options={{ title: 'Cubo grande' }} />
         <Stack.Screen name="Scansione" component={protetta(ScanScreen, "Scansione")} options={{ title: 'Scansione', headerShown: false }} />
         <Stack.Screen name="AnteprimaScansione" component={protetta(FixColorsScreen, "AnteprimaScansione")} options={{ title: 'Controlla' }} />
         <Stack.Screen name="Correggi" component={protetta(FixColorsScreen, "Correggi")} options={{ title: 'Correggi' }} />
